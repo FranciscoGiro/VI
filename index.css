@@ -1,0 +1,16 @@
+* {
+    border: 0px;
+    padding: 0px;
+}
+
+.grid-scatterplot {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 10px;
+}
+
+
+.grid-scatterplot div {
+    height: 150px;
+    width: auto;
+}

@@ -1,14 +1,14 @@
-const margin = { top: 20, right: 30, bottom: 40, left: 90 };
-const width = 450 - margin.left - margin.right;
-const height = 470 - margin.top - margin.bottom;
+const margin = { top: 20, right: 30, bottom: 40, left: 30 };
+const width = 300 - margin.left - margin.right;
+const height = 300 - margin.top - margin.bottom;
 
 var currentYear = 2014
 
 let display = []
 
 function init() {
-  createScatterPlot("#vi1");
-  createLineChart("#vi3");
+  createScatterPlot("#vi1", "returnOnAssets");
+  createLineChart("#vi3")
 
   d3.select("#b2014").on("click", () => {
     currentYear=2014
@@ -36,7 +36,7 @@ function init() {
   });
 }
 
-function createScatterPlot(id) {
+function createScatterPlot(id, indicator) {
   const svg = d3
     .select(id)
     .attr("width", width + margin.left + margin.right)
@@ -47,11 +47,9 @@ function createScatterPlot(id) {
 
   d3.csv("./dataset/2014.csv").then(function (data) {
 
-    var min = d3.min(data, (d) => d.returnOnAssets)
-
     const x = d3
       .scaleLinear()
-      .domain( [-5, d3.max(data, (d) => d.returnOnAssets)])
+      .domain( [-5, d3.max(data, (d) => d[indicator])])
       .range([0, width]);
     svg
       .append("g")
@@ -75,7 +73,7 @@ function createScatterPlot(id) {
       .enter()
       .append("circle")
       .attr("class", "circleValues itemValue")
-      .attr("cx", (d) => x(d.returnOnAssets))
+      .attr("cx", (d) => x(d[indicator]))
       .attr("cy", (d) => y(d.priceVar))
       .attr("r", 2)
       .style("fill", "steelblue")
@@ -86,62 +84,68 @@ function createScatterPlot(id) {
   });
 }
 
-
 function createLineChart(id) {
-  const svg = d3
-    .select(id)
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("id", "gLineChart")
-    .attr("transform", `translate(${margin.left}, ${margin.top})`);
-
-  d3.csv("./dataset/total.csv").then(function (data) {
-
-    const x = d3.time.scale()
-    .range([200, 0]);
-    .domain(["2018","2017","2016","2015","2014"])
-    svg
+  const svg = d3.select(id)
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
       .append("g")
-      .attr("id", "gXAxis")
-      .attr("transform", `translate(0, ${height})`)
-      .call(d3.axisBottom(x));
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+    
+    //Read the data
+    d3.csv("./dataset/total.csv").then( function(data) {
 
-    const y = d3
-      .scaleLinear()
-      .domain([-50, d3.max(data, (d) => d.priceVar)])
-      .range([height, 0]);
-    svg
-      .append("g")
-      .attr("id", "gYAxis")
-      .call(d3.axisLeft(y));
+        companies = ["PG", "KR", "GIS"]
 
-    svg
-      .append("path")
-      .datum(data)
-      .attr("class", "pathValue") 
-      .attr("fill", "none")
-      .attr("stroke", "steelblue")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x((d) => x(d.year))
-          .y((d) => y(d.priceVar))
-      );
-  });
+        data = data.filter(d => companies.includes(d.Company) )
+
+    
+      // group the data: I want to draw one line per group
+      const sumstat = d3.group(data, d => d.Company); // nest function allows to group the calculation per level of a factor
+    
+      // Add X axis --> it is a date format
+      const x = d3.scaleLinear()
+        .domain(d3.extent(data, function(d) { return d.year; }))
+        .range([ 0, width ]);
+      svg.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x).ticks(5));
+    
+      // Add Y axis
+      console.log(height)
+      const y = d3.scaleLinear()
+        .domain([-50, d3.max(data, function(d) { return +d.priceVar; })])
+        .range([ height, 0 ]);
+      svg.append("g")
+        .call(d3.axisLeft(y));
+    
+      // color palette
+      const color = d3.scaleOrdinal()
+        .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
+    
+      // Draw the line
+      svg.selectAll(".line")
+          .data(sumstat)
+          .join("path")
+            .attr("fill", "none")
+            .attr("stroke", function(d){ return color(d[0]) })
+            .attr("stroke-width", 1.5)
+            .attr("d", function(d){
+              return d3.line()
+                .x(function(d) { return x(d.year); })
+                .y(function(d) { return y(+d.priceVar); })
+                (d[1])
+            })
+    
+    })
 }
-
 
 
 
 function updateScatterPlot(sector) {
 
-  console.log("Vou dar update")
     d3.csv(`./dataset/${currentYear}.csv`).then(function (data) {
 
-      console.log(currentYear)
         if(sector != ""){
           data = data.filter(function (elem) {
             return  sector == elem.oscar_year;
