@@ -1,6 +1,6 @@
 const margin = { top: 20, right: 30, bottom: 40, left: 30 };
-const width = 300 - margin.left - margin.right;
-const height = 300 - margin.top - margin.bottom;
+const width = 140 - margin.left - margin.right;
+const height = 150 - margin.top - margin.bottom;
 
 var currentYear = 2014
 
@@ -8,7 +8,12 @@ let display = []
 
 function init() {
   createScatterPlot("#vi1", "returnOnAssets");
-  createLineChart("#vi3")
+  createScatterPlot("#vi2", "returnOnAssets");
+  createScatterPlot("#vi3", "returnOnAssets");
+  createScatterPlot("#vi4", "returnOnAssets");
+  createScatterPlot("#vi5", "returnOnAssets");
+  createScatterPlot("#vi6", "returnOnAssets");
+  createLineChart("#vi8")
 
   d3.select("#b2014").on("click", () => {
     currentYear=2014
@@ -85,6 +90,10 @@ function createScatterPlot(id, indicator) {
 }
 
 function createLineChart(id) {
+
+  const margin = { top: 20, right: 30, bottom: 40, left: 30 };
+  const width = 250 - margin.left - margin.right;
+  const height = 300 - margin.top - margin.bottom;
   const svg = d3.select(id)
       .append("svg")
         .attr("width", width + margin.left + margin.right)
