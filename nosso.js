@@ -6,6 +6,12 @@ var currentYear = 2014
 
 let display = []
 
+const getColor = () => {
+  colors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']
+  random = Math.floor(Math.random() * 9);
+  return colors[random]
+}
+
 function init() {
   createScatterPlot("#vi1", "returnOnAssets");
   createScatterPlot("#vi2", "returnOnAssets");
@@ -82,7 +88,8 @@ function createScatterPlot(id, indicator) {
       .attr("cy", (d) => y(d.priceVar))
       .attr("r", 2)
       .style("fill", "steelblue")
-
+      .on("mouseover", (event, d) => handleScatterplotMouseOver(d))
+      .on("mouseleave", (event, d) => handleMouseLeave())
       //.on("click", (event, d) => handleScatterplotMouseClick(d))
       .on("click", (event, d) => handleBubbleMouseClick(d))
       .text((d) => d.Company);
@@ -131,7 +138,7 @@ function createLineChart(id) {
       // color palette
       const color = d3.scaleOrdinal()
         .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
-    
+
       // Draw the line
       svg.selectAll(".line")
           .data(sumstat)
@@ -139,12 +146,15 @@ function createLineChart(id) {
             .attr("fill", "none")
             .attr("stroke", function(d){ return color(d[0]) })
             .attr("stroke-width", 1.5)
+            .attr("class", "lineValues")
             .attr("d", function(d){
               return d3.line()
                 .x(function(d) { return x(d.year); })
                 .y(function(d) { return y(+d.priceVar); })
                 (d[1])
             })
+            .on("mouseover", (event, d) => handleLineChartMouseOver(d))
+            .on("mouseleave", (event, d) => handleMouseLeave(d))
     
     })
 }
@@ -234,4 +244,52 @@ function handleScatterplotMouseClick(item) {
         return d.Company != item.Company;
         })
         .style("opacity", "0");
+    
+  
+}
+
+function handleScatterplotMouseOver(item) {
+  d3.selectAll(".itemValue")
+    .filter(function (d, i) {
+      return d.Company == item.Company;
+    })
+    .style("fill", "red").attr("r", 6);
+
+    
+  d3.selectAll(".lineValues")
+    .filter(function (d, i) {
+    return d[0] == item.Company;
+    })
+    .style("stroke", "black")
+    .attr("stroke-width", 3);
+}
+
+
+function handleLineChartMouseOver(item) {
+  d3.selectAll(".itemValue")
+    .filter(function (d, i) {
+      return d.Company == item[0];
+    })
+    .style("fill", "red").attr("r", 6);
+
+    
+  d3.selectAll(".lineValues")
+    .filter(function (d, i) {
+      console.log(d)
+    return d[0] == item[0];
+    })
+    .style("stroke", "black")
+    .attr("stroke-width", 3);
+}
+
+
+
+function handleMouseLeave(item) {
+  d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
+  d3.selectAll(".lineValues")
+    .filter(function (d, i) {
+      console.log(d)
+    return d[0] == item[0];
+    })
+    .style("stroke", getColor()).attr("stroke-width", 1.5);
 }
