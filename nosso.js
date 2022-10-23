@@ -13,6 +13,7 @@ const getColor = () => {
 }
 
 function init() {
+  
   createScatterPlot("#vi1", "returnOnAssets");
   createScatterPlot("#vi2", "returnOnAssets");
   createScatterPlot("#vi3", "returnOnAssets");
@@ -48,6 +49,10 @@ function init() {
 }
 
 function createScatterPlot(id, indicator) {
+  var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
+
   const svg = d3
     .select(id)
     .attr("width", width + margin.left + margin.right)
@@ -88,11 +93,23 @@ function createScatterPlot(id, indicator) {
       .attr("cy", (d) => y(d.priceVar))
       .attr("r", 2)
       .style("fill", "steelblue")
-      .on("mouseover", (event, d) => handleScatterplotMouseOver(d))
-      .on("mouseleave", (event, d) => handleMouseLeave())
+      //.on("mouseover", (event, d) => handleScatterplotMouseOver(d))
+      //.on("mouseleave", (event, d) => handleScatterplotMouseLeave(d))
       //.on("click", (event, d) => handleScatterplotMouseClick(d))
-      .on("click", (event, d) => handleBubbleMouseClick(d))
-      .text((d) => d.Company);
+      .on("mouseover", (event, d) => {		
+        div.transition()		
+            .duration(200)		
+            .style("opacity", .9);		
+        div	.html(d.Company + "<br/>")	
+            .style("left", (event.pageX) + "px")		
+            .style("top", (event.pageY - 28) + "px");	
+        })					
+      .on("mouseout", function(d) {		
+          div.transition()		
+              .duration(500)		
+              .style("opacity", 0);	
+      });
+      //.on("click", (event, d) => handleBubbleMouseClick(d))
   });
 }
 
@@ -154,7 +171,9 @@ function createLineChart(id) {
                 (d[1])
             })
             .on("mouseover", (event, d) => handleLineChartMouseOver(d))
-            .on("mouseleave", (event, d) => handleMouseLeave(d))
+            .on("mouseleave", (event, d) => handleLineChartMouseLeave(d))
+            .append("title")
+            .text((d) => d[0]);
     
     })
 }
@@ -249,6 +268,19 @@ function handleScatterplotMouseClick(item) {
 }
 
 function handleScatterplotMouseOver(item) {
+  var div = d3.select("body").append("div")
+  .attr("class", "tooltip-donut")
+  .style("opacity", 0);
+    
+  div.transition()
+  .duration(50)
+  .style("opacity", 1);
+
+  div.html(item.Company)
+        .style("left",  "50%")
+        .style("top", "50%");
+
+
   d3.selectAll(".itemValue")
     .filter(function (d, i) {
       return d.Company == item.Company;
@@ -284,7 +316,17 @@ function handleLineChartMouseOver(item) {
 
 
 
-function handleMouseLeave(item) {
+function handleScatterplotMouseLeave(item) {
+  d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
+  d3.selectAll(".lineValues")
+    .filter(function (d, i) {
+      console.log(d)
+    return d[0] == item.COmpany;
+    })
+    .style("stroke", getColor()).attr("stroke-width", 1.5);
+}
+
+function handleLineChartMouseLeave(item) {
   d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
   d3.selectAll(".lineValues")
     .filter(function (d, i) {
