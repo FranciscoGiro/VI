@@ -103,7 +103,9 @@ function createScatterPlot(id, indicator) {
         div	.html(d.Company + "<br/>")	
             .style("left", (event.pageX) + "px")		
             .style("top", (event.pageY - 28) + "px");	
-        })					
+        handleMouseOver(d)
+        })		
+      .on("mouseleave", (event, d) => handleMouseLeave(d))			
       .on("mouseout", function(d) {		
           div.transition()		
               .duration(500)		
@@ -114,6 +116,10 @@ function createScatterPlot(id, indicator) {
 }
 
 function createLineChart(id) {
+
+  var div = d3.select("body").append("div")	
+  .attr("class", "tooltip")				
+  .style("opacity", 0);
 
   const margin = { top: 20, right: 30, bottom: 40, left: 30 };
   const width = 250 - margin.left - margin.right;
@@ -170,10 +176,21 @@ function createLineChart(id) {
                 .y(function(d) { return y(+d.priceVar); })
                 (d[1])
             })
-            .on("mouseover", (event, d) => handleLineChartMouseOver(d))
-            .on("mouseleave", (event, d) => handleLineChartMouseLeave(d))
-            .append("title")
-            .text((d) => d[0]);
+            .on("mouseover", (event, d) => {		
+              div.transition()		
+                  .duration(200)		
+                  .style("opacity", .9);		
+              div.html(d[0] + "<br/>")	
+                  .style("left", (event.pageX) + "px")		
+                  .style("top", (event.pageY - 28) + "px");	
+              handleMouseOver(d)
+              })		
+            .on("mouseleave", (event, d) => handleMouseLeave(d))			
+            .on("mouseout", function(d) {		
+                div.transition()		
+                    .duration(500)		
+                    .style("opacity", 0);	
+            });
     
     })
 }
@@ -267,30 +284,20 @@ function handleScatterplotMouseClick(item) {
   
 }
 
-function handleScatterplotMouseOver(item) {
-  var div = d3.select("body").append("div")
-  .attr("class", "tooltip-donut")
-  .style("opacity", 0);
-    
-  div.transition()
-  .duration(50)
-  .style("opacity", 1);
+function handleMouseOver(item) {
 
-  div.html(item.Company)
-        .style("left",  "50%")
-        .style("top", "50%");
-
+  company = item[0] || item.Company
 
   d3.selectAll(".itemValue")
     .filter(function (d, i) {
-      return d.Company == item.Company;
+      return d.Company == company;
     })
     .style("fill", "red").attr("r", 6);
 
     
   d3.selectAll(".lineValues")
     .filter(function (d, i) {
-    return d[0] == item.Company;
+    return d[0] == company;
     })
     .style("stroke", "black")
     .attr("stroke-width", 3);
@@ -307,8 +314,7 @@ function handleLineChartMouseOver(item) {
     
   d3.selectAll(".lineValues")
     .filter(function (d, i) {
-      console.log(d)
-    return d[0] == item[0];
+      return d[0] == item[0];
     })
     .style("stroke", "black")
     .attr("stroke-width", 3);
@@ -316,12 +322,13 @@ function handleLineChartMouseOver(item) {
 
 
 
-function handleScatterplotMouseLeave(item) {
+function handleMouseLeave(item) {
+  company = item[0] || item.Company
   d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
+
   d3.selectAll(".lineValues")
     .filter(function (d, i) {
-      console.log(d)
-    return d[0] == item.COmpany;
+      return d[0] == company;
     })
     .style("stroke", getColor()).attr("stroke-width", 1.5);
 }
