@@ -2,70 +2,137 @@
 <meta charset="utf-8">
 
 <!-- Load d3.js -->
-<script src="https://d3js.org/d3.v6.js"></script>
+<script src="https://d3js.org/d3.v7.js"></script>
+
+<!-- Add 2 buttons -->
+<button onclick="faz()">Insert</button>
+<button onclick="remove()">Remove</button>
+<button onclick="update(data2)">Dataset 2</button>
 
 <!-- Create a div where the graph will take place -->
 <div id="my_dataviz"></div>
 
+
 <script>
 
-    // set the dimensions and margins of the graph
-    const margin = {top: 10, right: 30, bottom: 30, left: 60},
-        width = 460 - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom;
-    
-    // append the svg object to the body of the page
-    const svg = d3.select("#my_dataviz")
-      .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
-    
-    //Read the data
-    d3.csv("./dataset/total.csv").then( function(data) {
+let defaultCompanies = ["PG", "KR", "GIS"]
 
-        companies = ["PG", "KR", "GIS"]
+  // Create 2 datasets
+  var data1 = [
+     {ser1: 0.3, ser2: 4},
+     {ser1: 2, ser2: 16},
+     {ser1: 3, ser2: 8}
+  ];
+  
+  var data2 = [
+     {ser1: 1, ser2: 7},
+     {ser1: 4, ser2: 1},
+     {ser1: 6, ser2: 8}
+  ];
+  
+  // set the dimensions and margins of the graph
+  var margin = {top: 10, right: 30, bottom: 30, left: 50},
+      width = 460 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+  
+  // append the svg object to the body of the page
+  var svg = d3.select("#my_dataviz")
+    .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+  
+  // Initialise a X axis:
+  var x = d3.scaleLinear().range([0,width]);
+  var xAxis = d3.axisBottom().scale(x);
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .attr("class","myXaxis")
+  
+  // Initialize an Y axis
+  var y = d3.scaleLinear().range([height, 0]);
+  var yAxis = d3.axisLeft().scale(y);
+  svg.append("g")
+    .attr("class","myYaxis")
+  
 
-        data = data.filter(d => companies.includes(d.Company) )
 
-        console.log(data)
-    
-      // group the data: I want to draw one line per group
-      const sumstat = d3.group(data, d => d.Company); // nest function allows to group the calculation per level of a factor
-    
-      // Add X axis --> it is a date format
-      const x = d3.scaleLinear()
-        .domain(d3.extent(data, function(d) { return d.year; }))
-        .range([ 0, width ]);
-      svg.append("g")
-        .attr("transform", `translate(0, ${height})`)
-        .call(d3.axisBottom(x).ticks(5));
-    
-      // Add Y axis
-      const y = d3.scaleLinear()
-        .domain([-50, d3.max(data, function(d) { return +d.priceVar; })])
-        .range([ height, 0 ]);
-      svg.append("g")
-        .call(d3.axisLeft(y));
-    
-      // color palette
-      const color = d3.scaleOrdinal()
-        .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
-    
-      // Draw the line
-      svg.selectAll(".line")
-          .data(sumstat)
-          .join("path")
-            .attr("fill", "none")
-            .attr("stroke", function(d){ return color(d[0]) })
-            .attr("stroke-width", 1.5)
-            .attr("d", function(d){
-              return d3.line()
-                .x(function(d) { return x(d.year); })
-                .y(function(d) { return y(+d.priceVar); })
-                (d[1])
-            })
-    
-    })
-    </script>
+
+  // Create a function that takes a dataset as input and update the plot:
+  function update() {
+  
+    d3.csv("./dataset/total.csv").then(function (data) {
+
+    data = data.filter(d => defaultCompanies.includes(d.Company) )
+
+    const sumstat = d3.group(data, d => d.Company);
+    // Create the X axis:
+    x.domain(d3.extent(data, function(d) { return d.year; })) ;
+    svg.selectAll(".myXaxis").transition()
+      .duration(3000)
+      .call(xAxis);
+  
+    // create the Y axis
+    y.domain([-50, d3.max(data, function(d) { return +d.priceVar; })]);
+    svg.selectAll(".myYaxis")
+      .transition()
+      .duration(3000)
+      .call(yAxis);
+  
+    // Create a update selection: bind to the new data
+    var u = svg.selectAll(".lineTest")
+      .data(sumstat);
+
+      console.log(sumstat)
+  
+    // Updata the line
+    u
+      .join(
+        (enter) => {
+        circles = enter
+        .append("path")
+        .attr("class","lineTest")
+        .merge(u)
+        .transition()
+        .duration(3000)
+        .attr("d", function(d){
+                return d3.line()
+                  .x(function(d) { return x(d.year); })
+                  .y(function(d) { return y(+d.priceVar); })
+                  (d[1])
+              })
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 2.5)
+            },
+        (update) => {
+          update
+            .transition()
+            .duration(1000)
+            .attr("cx", (d) => x(d.budget))
+            .attr("cy", (d) => y(d.rating))
+            .attr("r", 4);
+        },
+        (exit) => {
+            exit.remove();
+          }
+      );
+  });
+  }
+  
+  // At the beginning, I run the update function on the first dataset:
+  update()
+
+  function faz() {
+    defaultCompanies.push("MD");
+    update()
+  }
+
+  function remove() {
+    defaultCompanies.pop("PG");
+    update()
+  }
+  
+  </script>

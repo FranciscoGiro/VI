@@ -5,6 +5,7 @@ const height = 150 - margin.top - margin.bottom;
 var currentYear = 2014
 
 let display = []
+let defaultCompanies = ["PG", "KR", "GIS"]
 
 const getColor = () => {
   colors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']
@@ -95,7 +96,7 @@ function createScatterPlot(id, indicator) {
       .style("fill", "steelblue")
       //.on("mouseover", (event, d) => handleScatterplotMouseOver(d))
       //.on("mouseleave", (event, d) => handleScatterplotMouseLeave(d))
-      //.on("click", (event, d) => handleScatterplotMouseClick(d))
+      .on("click", (event, d) => handleScatterplotMouseClick(d))
       .on("mouseover", (event, d) => {		
         div.transition()		
             .duration(200)		
@@ -129,33 +130,36 @@ function createLineChart(id) {
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
       .append("g")
+        .attr("id", "gLineChart")
         .attr("transform", `translate(${margin.left},${margin.top})`);
     
     //Read the data
     d3.csv("./dataset/total.csv").then( function(data) {
 
-        companies = ["PG", "KR", "GIS"]
+        
 
-        data = data.filter(d => companies.includes(d.Company) )
+        data = data.filter(d => defaultCompanies.includes(d.Company) )
 
     
       // group the data: I want to draw one line per group
       const sumstat = d3.group(data, d => d.Company); // nest function allows to group the calculation per level of a factor
+      
     
       // Add X axis --> it is a date format
       const x = d3.scaleLinear()
         .domain(d3.extent(data, function(d) { return d.year; }))
         .range([ 0, width ]);
       svg.append("g")
+        .attr("id", "gXAxis")
         .attr("transform", `translate(0, ${height})`)
         .call(d3.axisBottom(x).ticks(5));
     
       // Add Y axis
-      console.log(height)
       const y = d3.scaleLinear()
         .domain([-50, d3.max(data, function(d) { return +d.priceVar; })])
         .range([ height, 0 ]);
       svg.append("g")
+        .attr("id", "gYAxis")
         .call(d3.axisLeft(y));
     
       // color palette
@@ -275,12 +279,11 @@ function handleBubbleMouseClick(item) {
 
 
 function handleScatterplotMouseClick(item) {
-    d3.selectAll(".itemValue")
-        .filter(function (d, i) {
-        return d.Company != item.Company;
-        })
-        .style("opacity", "0");
-    
+  if(!defaultCompanies.includes(item.Company))
+    defaultCompanies.push(item.Company)
+  
+
+  updateLineChart()
   
 }
 
@@ -304,24 +307,6 @@ function handleMouseOver(item) {
 }
 
 
-function handleLineChartMouseOver(item) {
-  d3.selectAll(".itemValue")
-    .filter(function (d, i) {
-      return d.Company == item[0];
-    })
-    .style("fill", "red").attr("r", 6);
-
-    
-  d3.selectAll(".lineValues")
-    .filter(function (d, i) {
-      return d[0] == item[0];
-    })
-    .style("stroke", "black")
-    .attr("stroke-width", 3);
-}
-
-
-
 function handleMouseLeave(item) {
   company = item[0] || item.Company
   d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
@@ -333,12 +318,43 @@ function handleMouseLeave(item) {
     .style("stroke", getColor()).attr("stroke-width", 1.5);
 }
 
-function handleLineChartMouseLeave(item) {
-  d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
-  d3.selectAll(".lineValues")
-    .filter(function (d, i) {
-      console.log(d)
-    return d[0] == item[0];
-    })
-    .style("stroke", getColor()).attr("stroke-width", 1.5);
+
+function updateLineChart() {
+  d3.csv("./dataset/total.csv").then(function (data) {
+
+    data = data.filter(d => defaultCompanies.includes(d.Company) )
+
+    const svg = d3.select("#gLineChart");
+
+    const sumstat = d3.group(data, d => d.Company); // nest function allows to group the calculation per level of a factor
+
+      // Add X axis --> it is a date format
+    const x = d3.scaleLinear()
+        .domain(d3.extent(data, function(d) { return d.year; }))
+        .range([ 0, width ]);
+    svg.select("gXAxis").call(d3.axisBottom(x));
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, d3.max(data, (d) => d.budget)])
+      .range([height, 0]);
+    svg
+      .select("gYAxis")
+      .call(d3.axisLeft(y));
+
+    const color = d3.scaleOrdinal()
+      .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
+
+    // Draw the line
+    svg.selectAll("path.lineValues")
+        .data(sumstat)
+        .transition()
+        .duration(1000)
+        .attr("d", function(d){
+          return d3.line()
+            .x(function(d) { return x(d.year); })
+            .y(function(d) { return y(+d.priceVar); })
+            (d[1])
+        });
+  });
 }
