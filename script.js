@@ -2,10 +2,12 @@ const margin = { top: 20, right: 30, bottom: 40, left: 35 };
 const width = 200 - margin.left - margin.right;
 const height = 160 - margin.top - margin.bottom;
 
-var currentYear = 2014
+let currentYear = 2014
 
 let display = []
 let defaultCompanies = ["PG", "KR", "GIS"]
+
+let defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"] 
 
 const getColor = () => {
   colors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']
@@ -25,28 +27,33 @@ function init() {
   createLineChart("#vi8")
 
   d3.select("#b2014").on("click", () => {
-    currentYear=2014
-    updateScatterPlots("");
+    currentYear = 2014;
+    updateYear();
   });
   d3.select("#b2015").on("click", () => {
-    currentYear=2015
-    updateScatterPlots("");
+    currentYear = 2015;
+    updateYear();
+
   });
   d3.select("#b2016").on("click", () => {
-    currentYear=2016
-    updateScatterPlots("");
+    currentYear = 2016;
+    updateYear();
+
   });
   d3.select("#b2017").on("click", () => {
-    currentYear=2017
-    updateScatterPlots("");
+    currentYear = 2017;
+    updateYear();
+
   });
   d3.select("#b2018").on("click", () => {
-    currentYear=2018
-    updateScatterPlot("");
+    currentYear = 2018;
+    updateYear();
+
   });
   d3.select("#reset").on("click", () => {
-    currentYear=2014
-    updateScatterPlot("");
+    defaultCompanies = ["PG", "KR", "GIS"]
+    updateYear(2014);
+    updateLineChart();
   });
 }
 
@@ -62,10 +69,10 @@ function createScatterPlot(id, indicator) {
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
-    .attr("id", "gScatterPlot")
+    .attr("id", `gScatterPlot`)
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  d3.csv("./dataset/2015.csv").then(function (data) {
+  d3.csv("./dataset/2014.csv").then(function (data) {
 
     min = 0
     data.map(d => {
@@ -141,17 +148,17 @@ function createScatterPlot(id, indicator) {
 }
 
 
-function updateScatterPlot(sector) {
+function updateScatterPlot(id,sector, indicator) {
 
     d3.csv(`./dataset/${currentYear}.csv`).then(function (data) {
 
-        if(sector != ""){
-          data = data.filter(function (elem) {
-            return  sector == elem.oscar_year;
+        /* if(sector != ""){
+          data = data.filter(function (d) {
+            return  sector == d.Sector;
           });
         }
-    
-        const svg = d3.select("#gScatterPlot");
+ */
+        const svg = d3.select(`#gScatterPlot`);
         const x = d3
           .scaleLinear()
           .domain([0, d3.max(data, (d) => d[indicator])])
@@ -164,7 +171,7 @@ function updateScatterPlot(sector) {
           .scaleLinear()
           .domain([0, d3.max(data, (d) => d.Revenue)])
           .range([height, 0]);
-        svg.select("gYAxis").call(d3.axisLeft(y).tickFormat((x) => x / 1000000 + "M"));
+        svg.select("gYAxis").call(d3.axisLeft(y).tickFormat((x) => x / 1000000000 + "B"));
     
         svg
           .selectAll("circle.circleValues")
@@ -174,21 +181,18 @@ function updateScatterPlot(sector) {
               circles = enter
                 .append("circle")
                 .attr("class", "circleValues itemValue")
-                .attr("cx", (d) => x(d.returnOnAssets))
+                .attr("cx", (d) => x(d[indicator]))
                 .attr("cy", (d) => y(d.Revenue))
                 .attr("r", 2)
                 .style("fill", "steelblue")
               circles
-                .transition()
-                .duration(1000)
-                .attr("cy", (d) => y(d.rating));
+                .attr("cx", (d) => x(d[indicator]))
+                .attr("cy", (d) => y(d.Revenue));
               circles.append("title").text((d) => d.Company);
             },
             (update) => {
               update
-                .transition()
-                .duration(1000)
-                .attr("cx", (d) => x(d.returnOnAssets))
+                .attr("cx", (d) => x(d[indicator]))
                 .attr("cy", (d) => y(d.Revenue))
                 .attr("r", 2);
             },
@@ -205,14 +209,12 @@ function handleScatterplotMouseClick(item) {
       :
       defaultCompanies.push(item.Company)
 
-  console.log(defaultCompanies)
   updateLineChart("#vi8")  
 }
 
 function handleLineChartMouseClick(item) {
   defaultCompanies.pop(item[0])
 
-  console.log(defaultCompanies)
   updateLineChart("#vi8")  
 }
 
@@ -309,7 +311,6 @@ function updateLineChart(id) {
         .attr("stroke", function(d){ return color(d[0]) })
         .attr("stroke-width", 1.5)
         .on("mouseover", (event, d) => {	
-          console.log("aqui")	
           div.transition()		
               .duration(200)		
               .style("opacity", .9);		
@@ -461,4 +462,14 @@ function createLineChart(id) {
 
 
 });
+}
+
+
+function updateYear() {
+
+  for(var i = 0; i < defaultIndicators.length; i++){
+    updateScatterPlot(`#vi${i+1}`, "", defaultIndicators[i])
+  }
+
+  updateLineChart()
 }
