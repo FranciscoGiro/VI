@@ -204,7 +204,7 @@ function handleMouseOver(item) {
     .filter(function (d, i) {
       return d.Company == company;
     })
-    .style("fill", "red").attr("r", 6);
+    .style("fill", "black").attr("r", 6);
 
     
   d3.selectAll(".lineTest")
@@ -240,6 +240,10 @@ function updateLineChart(id) {
 
   d3.csv("./dataset/total.csv").then(function (data) {
 
+    var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
+
     const color = d3.scaleOrdinal()
       .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
 
@@ -260,8 +264,10 @@ function updateLineChart(id) {
     const y = d3.scaleLinear()
         .domain([-50, d3.max(data, function(d) { return +d.priceVar; })])
         .range([height, 0]);
+    var yAxis = d3.axisLeft().scale(y);
+    
     svg.selectAll(".myYaxis")
-      .call(d3.axisLeft().scale(y));
+      .call(yAxis);
 
     // Create a update selection: bind to the new data
     var u = svg.selectAll(".lineTest")
@@ -275,8 +281,6 @@ function updateLineChart(id) {
         .append("path")
         .attr("class","lineTest")
         .merge(u)
-        .transition()
-        .duration(1000)
         .attr("d", function(d){
                 return d3.line()
                   .x(function(d) { return x(d.year); })
@@ -286,14 +290,29 @@ function updateLineChart(id) {
         .attr("fill", "none")
         .attr("stroke", function(d){ return color(d[0]) })
         .attr("stroke-width", 1.5)
-        
-            },
+        .on("mouseover", (event, d) => {	
+          console.log("aqui")	
+          div.transition()		
+              .duration(200)		
+              .style("opacity", .9);		
+          div.html(d[0] + "<br/>")	
+              .style("left", (event.pageX) + "px")		
+              .style("top", (event.pageY - 28) + "px");	
+          handleMouseOver(d)
+          })		
+        .on("mouseleave", (event, d) => handleMouseLeave(d))			
+        .on("mouseout", function(d) {		
+            div.transition()		
+                .duration(500)		
+                .style("opacity", 0);	
+        })
+        },
         (update) => {
           update
             .transition()
             .duration(1000)
-            .attr("cx", (d) => x(d.budget))
-            .attr("cy", (d) => y(d.rating))
+            .attr("cx", (d) => x(d.year))
+            .attr("cy", (d) => y(d.priceVar))
             .attr("r", 4);
         },
         (exit) => {
