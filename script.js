@@ -26,19 +26,19 @@ function init() {
 
   d3.select("#b2014").on("click", () => {
     currentYear=2014
-    updateScatterPlot("");
+    updateScatterPlots("");
   });
   d3.select("#b2015").on("click", () => {
     currentYear=2015
-    updateScatterPlot("");
+    updateScatterPlots("");
   });
   d3.select("#b2016").on("click", () => {
     currentYear=2016
-    updateScatterPlot("");
+    updateScatterPlots("");
   });
   d3.select("#b2017").on("click", () => {
     currentYear=2017
-    updateScatterPlot("");
+    updateScatterPlots("");
   });
   d3.select("#b2018").on("click", () => {
     currentYear=2018
@@ -55,6 +55,8 @@ function createScatterPlot(id, indicator) {
       .attr("class", "tooltip")				
       .style("opacity", 0);
 
+
+
   const svg = d3
     .select(id)
     .attr("width", width + margin.left + margin.right)
@@ -63,11 +65,17 @@ function createScatterPlot(id, indicator) {
     .attr("id", "gScatterPlot")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  d3.csv("./dataset/2014.csv").then(function (data) {
+  d3.csv("./dataset/2015.csv").then(function (data) {
+
+    min = 0
+    data.map(d => {
+      if(d[indicator] < -1)
+        min = d[indicator]
+    })
 
     const x = d3
       .scaleLinear()
-      .domain( [-5, d3.max(data, (d) => d[indicator])])
+      .domain([min, d3.max(data, (d) => d[indicator])])
       .range([0, width]);
     svg
       .append("g")
@@ -91,17 +99,17 @@ function createScatterPlot(id, indicator) {
     .attr("font-weight", "bold")
     .attr("y", -margin.left+10)
     .attr("x", -margin.top+20)
-    .text("Price Var")
+    .text("Revenue")
 
 
     const y = d3
             .scaleLinear()
-            .domain([0, d3.max(data, (d) => d.priceVar)])
+            .domain([0, d3.max(data, (d) => d.Revenue)])
             .range([height, 0]);
     svg
       .append("g")
       .attr("id", "gYAxis")
-      .call(d3.axisLeft(y));
+      .call(d3.axisLeft(y).tickFormat((x) => x / 1000000000 + "B"));
 
     svg
       .selectAll("circle.circleValues") 
@@ -110,7 +118,7 @@ function createScatterPlot(id, indicator) {
       .append("circle")
       .attr("class", "circleValues itemValue")
       .attr("cx", (d) => x(d[indicator]))
-      .attr("cy", (d) => y(d.priceVar))
+      .attr("cy", (d) => y(d.Revenue))
       .attr("r", 2)
       .style("fill", "steelblue")
       .on("mouseover", (event, d) => {	
@@ -144,10 +152,9 @@ function updateScatterPlot(sector) {
         }
     
         const svg = d3.select("#gScatterPlot");
-    
         const x = d3
           .scaleLinear()
-          .domain([d3.min(data, (d) => d.returnOnAssets), d3.max(data, (d) => d.returnOnAssets)])
+          .domain([0, d3.max(data, (d) => d[indicator])])
           .range([0, width]);
         svg
           .select("#gXAxis")
@@ -155,9 +162,9 @@ function updateScatterPlot(sector) {
     
         const y = d3
           .scaleLinear()
-          .domain([0, d3.max(data, (d) => d.priceVar)])
+          .domain([0, d3.max(data, (d) => d.Revenue)])
           .range([height, 0]);
-        svg.select("gYAxis").call(d3.axisLeft(y));
+        svg.select("gYAxis").call(d3.axisLeft(y).tickFormat((x) => x / 1000000 + "M"));
     
         svg
           .selectAll("circle.circleValues")
@@ -168,7 +175,7 @@ function updateScatterPlot(sector) {
                 .append("circle")
                 .attr("class", "circleValues itemValue")
                 .attr("cx", (d) => x(d.returnOnAssets))
-                .attr("cy", (d) => y(d.priceVar))
+                .attr("cy", (d) => y(d.Revenue))
                 .attr("r", 2)
                 .style("fill", "steelblue")
               circles
@@ -182,7 +189,7 @@ function updateScatterPlot(sector) {
                 .transition()
                 .duration(1000)
                 .attr("cx", (d) => x(d.returnOnAssets))
-                .attr("cy", (d) => y(d.priceVar))
+                .attr("cy", (d) => y(d.Revenue))
                 .attr("r", 2);
             },
             (exit) => {
@@ -192,25 +199,20 @@ function updateScatterPlot(sector) {
       });
   }
 
-
-function handleBubbleMouseClick(item) {
-
-    updateScatterPlot(item.setor)
-
-    d3.selectAll(".itemValue")
-        .filter(function (d, i) {
-        return d.Company != item.Company;
-        })
-        .style("opacity", "0");
-}
-
-
 function handleScatterplotMouseClick(item) {
   defaultCompanies.includes(item.Company) ?
       defaultCompanies.pop(item.Company)
       :
       defaultCompanies.push(item.Company)
 
+  console.log(defaultCompanies)
+  updateLineChart("#vi8")  
+}
+
+function handleLineChartMouseClick(item) {
+  defaultCompanies.pop(item[0])
+
+  console.log(defaultCompanies)
   updateLineChart("#vi8")  
 }
 
@@ -248,8 +250,6 @@ function handleMouseLeave(item) {
     .style("stroke", function(d){ return color(d[0])})
     .attr("stroke-width", 1.5);
 }
-
-
 
 function updateLineChart(id) {
   const margin = { top: 20, right: 30, bottom: 40, left: 30 };
@@ -324,6 +324,12 @@ function updateLineChart(id) {
                 .duration(500)		
                 .style("opacity", 0);	
         })
+        .on("click", (event, d) => {
+          handleLineChartMouseClick(d)
+          div.transition()		
+                .duration(500)		
+                .style("opacity", 0);	
+        });
         },
         (update) => {
           update
@@ -347,8 +353,8 @@ function createLineChart(id) {
       .attr("class", "tooltip")				
       .style("opacity", 0);
 
-  const margin = { top: 20, right: 30, bottom: 40, left: 30 };
-  const width = 250 - margin.left - margin.right;
+  const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+  const width = 300 - margin.left - margin.right;
   const height = 300 - margin.top - margin.bottom;
 
   // append the svg object to the body of the page
@@ -379,6 +385,24 @@ function createLineChart(id) {
 
   const color = d3.scaleOrdinal()
       .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
+
+
+    svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .attr("x", width)
+    .attr("y", height + margin.top + 10)
+    .text("year");
+
+    svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("transform", "rotate(-90)")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .attr("y", -margin.left+20)
+    .attr("x", -margin.top+20)
+    .text("Price Var %")
 
   
   d3.csv("./dataset/total.csv").then(function (data) {
@@ -426,7 +450,14 @@ function createLineChart(id) {
         div.transition()		
             .duration(500)		
             .style("opacity", 0);	
+    })
+    .on("click", (event, d) => {
+      handleLineChartMouseClick(d)
+      div.transition()		
+            .duration(500)		
+            .style("opacity", 0);	
     });
+    ;
 
 
 });
