@@ -1,4 +1,4 @@
-const margin = { top: 20, right: 30, bottom: 40, left: 30 };
+const margin = { top: 20, right: 30, bottom: 40, left: 35 };
 const width = 200 - margin.left - margin.right;
 const height = 160 - margin.top - margin.bottom;
 
@@ -74,6 +74,24 @@ function createScatterPlot(id, indicator) {
       .attr("id", "gXAxis")
       .attr("transform", `translate(0, ${height})`)
       .call(d3.axisBottom(x));
+
+
+    svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .attr("x", width)
+    .attr("y", height + margin.top + 10)
+    .text(indicator);
+
+    svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("transform", "rotate(-90)")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .attr("y", -margin.left+10)
+    .attr("x", -margin.top+20)
+    .text("Price Var")
 
 
     const y = d3
