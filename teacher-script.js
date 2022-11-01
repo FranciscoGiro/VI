@@ -2,6 +2,8 @@ const margin = { top: 20, right: 30, bottom: 40, left: 90 };
 const width = 600 - margin.left - margin.right;
 const height = 400 - margin.top - margin.bottom;
 
+var eliminate = ""
+
 function init() {
   createBarChart("#vi1");
   createScatterPlot("#vi2");
@@ -233,6 +235,9 @@ function updateScatterPlot(start, finish) {
       return start <= elem.oscar_year && elem.oscar_year <= finish;
     });
 
+    if(eliminate !== "")
+      data = data.filter( elem => elem.title !== eliminate); 
+
     const svg = d3.select("#gScatterPlot");
 
     const x = d3
@@ -352,6 +357,14 @@ function updateLineChart(start, finish) {
 }
 
 function handleMouseOver(item) {
+
+  eliminate = item.title
+  updateScatterPlot(2008, 2014)
+  eliminate = ""
+  updateScatterPlot(2008, 2014)
+
+
+
   d3.selectAll(".itemValue")
     .filter(function (d, i) {
       return d.title == item.title;
