@@ -68,6 +68,8 @@ let defaultCompanies = ["PG", "KR", "GIS"]
     data = data.filter(d => defaultCompanies.includes(d.Company) )
 
     const sumstat = d3.group(data, d => d.Company);
+
+    console.log(sumstat)
     // Create the X axis:
     x.domain(d3.extent(data, function(d) { return d.year; })) ;
     svg.selectAll(".myXaxis").transition()
@@ -85,7 +87,6 @@ let defaultCompanies = ["PG", "KR", "GIS"]
     var u = svg.selectAll(".lineTest")
       .data(sumstat, d => d[0]);
 
-      console.log(sumstat)
   
     // Updata the line
     u
@@ -115,6 +116,7 @@ let defaultCompanies = ["PG", "KR", "GIS"]
             .attr("r", 4);
         },
         (exit) => {
+            console.log(exit)
             exit.remove();
           }
       );
@@ -130,8 +132,8 @@ let defaultCompanies = ["PG", "KR", "GIS"]
   }
 
   function handleClick(item){
+    defaultCompanies = defaultCompanies.filter(d => d !== item[0])
     console.log(item[0])
-    defaultCompanies.pop(item[0]);
     update()
   }
 
