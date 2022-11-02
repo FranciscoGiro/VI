@@ -83,7 +83,7 @@ let defaultCompanies = ["PG", "KR", "GIS"]
   
     // Create a update selection: bind to the new data
     var u = svg.selectAll(".lineTest")
-      .data(sumstat);
+      .data(sumstat, d => d[0]);
 
       console.log(sumstat)
   
@@ -95,8 +95,7 @@ let defaultCompanies = ["PG", "KR", "GIS"]
         .append("path")
         .attr("class","lineTest")
         .merge(u)
-        .transition()
-        .duration(3000)
+        .on("click", (event, d) => handleClick(d))	
         .attr("d", function(d){
                 return d3.line()
                   .x(function(d) { return x(d.year); })
@@ -127,6 +126,12 @@ let defaultCompanies = ["PG", "KR", "GIS"]
 
   function faz() {
     defaultCompanies.push("MD");
+    update()
+  }
+
+  function handleClick(item){
+    console.log(item[0])
+    defaultCompanies.pop(item[0]);
     update()
   }
 
