@@ -7,11 +7,23 @@
 <!-- Create a div where the graph will take place -->
 <div id="my_dataviz"></div>
 
-<script>
 
+<script>
+    function color(priceVar) {
+        if(priceVar < -30)
+            return "#5F021F"
+        else if(priceVar < 0)
+            return "red"
+        else if(priceVar < 10)
+            return "grey"
+        else if(priceVar < 40)
+            return "lightgreen"
+        else 
+            return "green"
+    }
     // set the dimensions and margins of the graph
     const margin = {top: 30, right: 50, bottom: 10, left: 100},
-      width = 1200 - margin.left - margin.right,
+      width = 850 - margin.left - margin.right,
       height = 400 - margin.top - margin.bottom;
     
     // append the svg object to the body of the page
@@ -32,12 +44,18 @@
             return "green"
         return "red"
       } */
-      const color = d3.scaleOrdinal()
+
+
+
+      /* var color = d3.scaleLinear().domain(d3.extent(data, (d) => +d["priceVar"]))
+                        .range(["red", "green"]) */
+
+/*       const color = d3.scaleOrdinal()
         .domain(["green", "red" ])
-        .range(["#00ff00", "#ff0000"])
+        .range(["#00ff00", "#ff0000"]) */
     
       // Here I set the list of dimension manually to control the order of axis:
-      dimensions = ["Revenue","Gross Margin","EBITDA Margin","Net Profit Margin","returnOnEquity","ROIC","returnOnAssets","Net Debt to EBITDA","Debt to Equity","PE ratio","Enterprise Value over EBITDA","priceBookValueRatio"]
+      dimensions = ["priceVar","Gross Margin","EBITDA Margin","Net Profit Margin","returnOnEquity","ROIC","returnOnAssets","Net Debt to EBITDA","Debt to Equity","PE ratio","Enterprise Value over EBITDA","priceBookValueRatio"]
     
       // For each dimension, I build a linear scale. I store all in a y object
       const y = {}
@@ -69,7 +87,7 @@
           .attr("class", "myPath" ) 
           .attr("d",  path)
           .style("fill", "none" )
-          .style("stroke", function(d){ return( color(parseInt(d.Revenue)))} )
+          .style("stroke", function(d){ return( color(parseInt(d.priceVar)))} )
           .style("opacity", 0.5)
           //.on("mouseover", highlight)
           //.on("mouseleave", doNotHighlight )
