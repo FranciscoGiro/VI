@@ -4,42 +4,39 @@ var defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROI
 var defaultCompanies = ["PG", "KR", "GIS"]
 
 function init() {
-  createScatterPlot("vi1", "returnOnAssets")
-  createScatterPlot("vi2", "EBITDA Margin")
-  createScatterPlot("vi3", "returnOnEquity")
-  createScatterPlot("vi4", "ROIC")
-  createScatterPlot("vi5", "Debt to Equity")
-  createScatterPlot("vi6", "priceBookValueRatio")
+  for(let i=0; i < defaultIndicators.length; i++)
+    createScatterPlot(`vi${i+1}`, defaultIndicators[i])
 
   createLineChart("#vi8")
 
   d3.select("#b2014").on("click", () => {
-    year = 2014;
+    year = 2014
+    updateAll()
   });
   d3.select("#b2015").on("click", () => {
     year = 2015;
+    updateAll()
 
   });
   d3.select("#b2016").on("click", () => {
     year = 2016;
+    updateAll()
 
   });
   d3.select("#b2017").on("click", () => {
     year = 2017;
-
+    updateAll()
   });
   d3.select("#b2018").on("click", () => {
     year = 2018;
-
+    updateAll()
   });
   d3.select("#reset").on("click", () => {
-
     sector = ""
     year = 2014
     defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"] 
     defaultCompanies = ["PG", "KR", "GIS"]
-
-    //TODO update
+    updateAll()
   });
 
 }
@@ -97,9 +94,6 @@ function createScatterPlot(id, indicator) {
       .attr("id", "gXAxis")
       .attr("transform", `translate(0, ${height})`)
       .call(d3.axisBottom(x).ticks(nTicks));
-
-
-
       
     const y = d3.scaleLinear()
                 .domain(d3.extent(data, (d) => parseInt(d.priceVar)))
@@ -127,21 +121,27 @@ function createScatterPlot(id, indicator) {
   });
 }
 
-async function updateScatterPlot(id, indicator) {
+function updateScatterPlot(id, indicator) {
 
   const margin = { top: 20, right: 30, bottom: 40, left: 40 };
   const width = 200 - margin.left - margin.right;
   const height = 160 - margin.top - margin.bottom;
 
   
-  d3.csv("./dataset/2014.csv").then(function (data) {
-    if(eliminate !== "")
-      data = data.filter(d => d.Company !== eliminate)
-
+  d3.csv(`./dataset/${year}.csv`).then(function (data) {
     if(sector !== "")
       data = data.filter(d => d.Sector === sector)
 
     const svg = d3.select(`#gScatterPlot-${id}`);
+
+
+    min = d3.min(data, (d) => parseInt(d[indicator]))
+    max = d3.max(data, (d) => parseInt(d[indicator]))
+    var nTicks;
+    if((max-min) > 50)
+      nTicks = 5
+    else
+      nTicks = 7
 
     const x = d3
       .scaleLinear()
@@ -149,7 +149,7 @@ async function updateScatterPlot(id, indicator) {
       .range([0, width]);
     svg
       .select("#gXAxis")
-      .call(d3.axisBottom(x));
+      .call(d3.axisBottom(x).ticks(nTicks));
 
     const y = d3.scaleLinear()
                 .domain(d3.extent(data, (d) => parseInt(d.priceVar)))
@@ -307,7 +307,7 @@ function updateLineChart(id) {
   const width = 250 - margin.left - margin.right;
   const height = 300 - margin.top - margin.bottom;
 
-  d3.csv("./dataset/total.csv").then(function (data) {
+  d3.csv(`./dataset/total.csv`).then(function (data) {
 
     const color = d3.scaleOrdinal()
       .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
@@ -475,9 +475,19 @@ function handleLineChartMouseClick(company) {
   updateLineChart("#vi8")  
 }
 
-
 function randomColor() {
   colors = ["blue", "steelblue", "orange", "yellow", "green", "purple", "red", "pink" ]
   let random = Math.floor(Math.random() * 8);
   return colors[random]
+}
+
+
+
+//Update All charts
+
+function updateAll() {
+  for(let i=0; i < defaultIndicators.length; i++)
+    updateScatterPlot(`vi${i+1}`, defaultIndicators[i])
+
+  updateLineChart()
 }

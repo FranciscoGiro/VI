@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v7.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<button onclick="update(2015)">update</button>
+<button onclick="reset()">reset</button>
+<div id="my_dataviz"></div>
+
+
+<script>
+
+    var sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
+
+    const sector_to_abrev = {"Consumer Defensive":"CD", "Basic Materials":"BM", "Healthcare":"H", 
+                    "Consumer Cyclical":"CC", "Industrials": "I","Real Estate":"RE", "Technology":"T",
+                    "Communication Services":"CS", "Energy":"E", "Financial Services":"FS", "Utilities":"U"}
+
+    const abrev_to_sector = {"CD":"Consumer Defensive", "BM":"Basic Materials", "H":"Healthcare", 
+                    "CC":"Consumer Cyclical", "I":"Industrials","RE":"Real Estate", "T":"Technology",
+                    "CS":"Communication Services", "E":"Energy", "FS":"Financial Services", "U":"Utilities"}
+
+    
+
+    // set the dimensions and margins of the graph
+    const margin = {top: 10, right: 20, bottom: 30, left: 50},
+        width = 500 - margin.left - margin.right,
+        height = 440 - margin.top - margin.bottom;
+    
+    // append the svg object to the body of the page
+    const svg = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    var x = d3.scaleBand()
+        .domain(sectors)
+        .range([0, width])
+        .padding(1)
+    var xAxis = d3.axisBottom().scale(x);
+    svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .attr("class","myXaxis")
+
+    var y = d3.scaleLinear().range([height, 0]);
+    var yAxis = d3.axisLeft().scale(y);
+    svg.append("g")
+        .attr("class","myYaxis")
+
+    svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .attr("x", width - 20)
+    .attr("y", height + margin.top + 20)
+    .text("Sectors");
+
+    svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("transform", "rotate(-90)")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .attr("y", -margin.left+10)
+    .attr("x", -margin.top)
+    .text("Price Var %")
+
+    function update(year) {
+    //Read the data
+    d3.csv(`./dataset/${year}.csv`).then( function(data) {
+
+      console.log(sectors)
+
+      if(sectors.length == 1){
+        let real_sector = abrev_to_sector[sectors[0]]
+        data = data.filter(d => {
+          return d.Sector == real_sector
+        })
+      }
+
+      console.log(data)
+    
+      // Add X axis
+      svg.selectAll(".myXaxis")
+         .call(xAxis);
+
+      
+
+    
+      // Add Y axis
+
+      y.domain(d3.extent(data, (d) => parseInt(d.priceVar)));
+        svg.selectAll(".myYaxis")
+            .call(yAxis);
+
+      // Add a scale for bubble size
+      const z = d3.scaleLinear()
+        .domain([0, 100])
+        .range([ 4, 40]);
+    
+      // Add a scale for bubble color
+      const myColor = d3.scaleOrdinal()
+        .domain(sectors)
+        .range(d3.schemeSet2);
+    
+      // Add dots
+      /* svg.append('g')
+        .selectAll("dot")
+        .data(data)
+        .join("circle")
+          .attr("cx", d => x(sector_to_abrev[d.Sector]))
+          .attr("cy", d => y(d.priceVar))
+          .attr("r", d => z(d["Market Capitalisation"]))
+          .style("fill", d => myColor(d.Sector))
+          .style("opacity", "0.7")
+          .attr("stroke", "white")
+          .style("stroke-width", "2px")
+          .append("title")
+            .text((d) => d.Company); */
+
+    svg
+      .selectAll("circle.lineTest")
+      .data(data, (d) => d.Company)
+      .join(
+        (enter) => {
+          circles = enter
+            .append("circle")
+            .attr("class","lineTest")
+            .attr("cx", d => x(sector_to_abrev[d.Sector]))
+            .attr("cy", d => y(d.priceVar))
+            .attr("r", d => z(d["Market Capitalisation"]))
+            .attr("fill", d => myColor(d.Sector))
+            .style("opacity", "0.7")
+            .attr("stroke", "white")
+            .style("stroke-width", "2px")
+            .on("click", (event, d) => handleClick(d))
+          circles
+            .transition()
+            .duration(1000)
+            .attr("cy", d => y(d.priceVar))
+          circles.append("title").text((d) => d.Company);
+        },
+        (update) => {
+          update
+            .attr("cx", d => x(sector_to_abrev[d.Sector]))
+            .attr("cy", (d) => y(parseInt(d.priceVar)))
+            .attr("r", d => z(d["Market Capitalisation"]))
+        },
+        (exit) => {
+          exit.remove();
+        }
+      );
+    
+      })
+    }
+    update(2014)
+
+    function handleClick(d) {
+      let abrev = sector_to_abrev[d.Sector]
+      sectors = sectors.filter(s => s == abrev)
+      update(2014)
+    }
+
+    function reset() {
+      sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
+      update(2014)
+    }
+    
+</script>
+
+

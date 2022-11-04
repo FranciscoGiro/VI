@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v7.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+<script>
+
+    // set the dimensions and margins of the graph
+    const margin = {top: 30, right: 50, bottom: 10, left: 100},
+      width = 1200 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+    
+    // append the svg object to the body of the page
+    const svg = d3.select("#my_dataviz")
+    .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform",
+            `translate(${margin.left},${margin.top})`);
+    
+    // Parse the Data
+    d3.csv("./dataset/2015.csv").then( function(data) {
+    
+      // Color scale: give me a specie name, I return a color
+/*       function color(revenue) {
+        if(revenue > 200000000000)
+            return "green"
+        return "red"
+      } */
+      const color = d3.scaleOrdinal()
+        .domain(["green", "red" ])
+        .range(["#00ff00", "#ff0000"])
+    
+      // Here I set the list of dimension manually to control the order of axis:
+      dimensions = ["Revenue","Gross Margin","EBITDA Margin","Net Profit Margin","returnOnEquity","ROIC","returnOnAssets","Net Debt to EBITDA","Debt to Equity","PE ratio","Enterprise Value over EBITDA","priceBookValueRatio"]
+    
+      // For each dimension, I build a linear scale. I store all in a y object
+      const y = {}
+      for (i in dimensions) {
+        name = dimensions[i]
+        y[name] = d3.scaleLinear()
+          .domain(d3.extent(data, (d) => +d[name]))
+          // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
+          .range([height, 0])
+      }
+    
+      // Build the X scale -> it find the best position for each Y axis
+      x = d3.scalePoint()
+        .range([0, width])
+        .domain(dimensions);
+    
+      // Highlight the specie that is hovered
+    
+      // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
+      function path(d) {
+          return d3.line()(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
+      }
+    
+      // Draw the lines
+      svg
+        .selectAll("myPath")
+        .data(data)
+        .join("path")
+          .attr("class", "myPath" ) 
+          .attr("d",  path)
+          .style("fill", "none" )
+          .style("stroke", function(d){ return( color(parseInt(d.Revenue)))} )
+          .style("opacity", 0.5)
+          //.on("mouseover", highlight)
+          //.on("mouseleave", doNotHighlight )
+    
+      // Draw the axis:
+      svg.selectAll("myAxis")
+        // For each dimension of the dataset I add a 'g' element:
+        .data(dimensions).enter()
+        .append("g")
+        .attr("class", "axis")
+        // I translate this element to its right position on the x axis
+        .attr("transform", function(d) { return `translate(${x(d)})`})
+        // And I build the axis with the call function
+        .each(function(d) { d3.select(this).call(d3.axisLeft().scale(y[d])); })
+        // Add axis title
+        .append("text")
+          .style("text-anchor", "middle")
+          .attr("y", -9)
+          .text(function(d) { return d; })
+          .style("fill", "black")
+    
+    })
+    </script>
