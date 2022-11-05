@@ -589,6 +589,7 @@ function handleLineChartMouseLeave(company, color) {
 function handleLineChartMouseClick(company) {
   if(defaultCompanies.includes(company)){
     d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
+    d3.selectAll(".lineTest").style("stroke-width", 1.5);
     defaultCompanies = defaultCompanies.filter(d => d !== company)
   }
   else
