@@ -1,14 +1,24 @@
-var sector = ""
 var year = 2014
 var defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"] 
 var defaultCompanies = ["PG", "KR", "GIS"]
+var sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
+var allSectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
+
+var sector_to_abrev = {"Consumer Defensive":"CD", "Basic Materials":"BM", "Healthcare":"H", 
+                "Consumer Cyclical":"CC", "Industrials": "I","Real Estate":"RE", "Technology":"T",
+                "Communication Services":"CS", "Energy":"E", "Financial Services":"FS", "Utilities":"U"}
+
+var abrev_to_sector = {"CD":"Consumer Defensive", "BM":"Basic Materials", "H":"Healthcare", 
+                "CC":"Consumer Cyclical", "I":"Industrials","RE":"Real Estate", "T":"Technology",
+                "CS":"Communication Services", "E":"Energy", "FS":"Financial Services", "U":"Utilities"}
 
 
 function init() {
   for(let i=0; i < defaultIndicators.length; i++)
     createScatterPlot(`vi${i+1}`, defaultIndicators[i])
 
-  createLineChart("#vi8")
+    createLineChart("#vi8")
+    createBubbleChart("#vi9")
 
   d3.select("#b2014").on("click", () => {
     year = 2014
@@ -37,6 +47,7 @@ function init() {
     year = 2014
     defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"] 
     defaultCompanies = ["PG", "KR", "GIS"]
+    sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
     updateAll()
   });
 
@@ -94,7 +105,7 @@ function createScatterPlot(id, indicator) {
       .call(d3.axisBottom(x).ticks(6));
       
     const y = d3.scaleLinear()
-                .domain(d3.extent(data, (d) => parseInt(d.priceVar)))
+                .domain(d3.extent(data, (d) => +d.priceVar))
                 .range([height, 0]);
     svg
       .append("g")
@@ -142,8 +153,11 @@ function updateScatterPlot(id, indicator) {
 
   
   d3.csv(`./dataset/${year}.csv`).then(function (data) {
-    if(sector !== "")
-      data = data.filter(d => d.Sector === sector)
+    
+    if(sectors.length == 1){
+      let real_sector = abrev_to_sector[sectors[0]]
+      data = data.filter(d => d.Sector == real_sector)
+    }
 
     const svg = d3.select(`#gScatterPlot-${id}`);
 
@@ -356,6 +370,7 @@ function createLineChart(id) {
 
 function updateLineChart() {
 
+
   var div = d3.select("body").append("div")	
   .attr("class", "tooltip")				
   .style("opacity", 0);
@@ -366,6 +381,14 @@ function updateLineChart() {
   const height = 300 - margin.top - margin.bottom;
 
   d3.csv(`./dataset/total.csv`).then(function (data) {
+
+
+/*     if(sectors.length == 1){
+      let real_sector = abrev_to_sector[sectors[0]]
+      data = data.filter(d => d.Sector == real_sector)
+    } */
+
+    console.log(data.length)
 
     const color = d3.scaleOrdinal()
       .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
@@ -495,10 +518,217 @@ function updateLineChart() {
   });
 }
 
+//Bubble Chart
 
+function createBubbleChart(id) {
+
+  var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 0);
+
+  const margin = {top: 10, right: 20, bottom: 30, left: 50}
+  const width = 400 - margin.left - margin.right;
+  const height = 230 - margin.top - margin.bottom;
+    
+
+    console.log(height + margin.top + margin.bottom)
+    // append the svg object to the body of the page
+    const svg = d3.select(id)
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("id", "gBubbleChart")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    var x = d3.scaleBand()
+        .domain(sectors)
+        .range([0, width])
+        .padding(1)
+    var xAxis = d3.axisBottom().scale(x);
+    var xaxis = svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .attr("class","myXaxis")
+
+    var y = d3.scaleLinear().range([height, 0]);
+    var yAxis = d3.axisLeft().scale(y);
+    svg.append("g")
+        .attr("class","myYaxis")
+
+    svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .attr("x", width - 20)
+    .attr("y", height + margin.top + 20)
+    .text("Sectors");
+
+    svg.append("text")
+    .attr("text-anchor", "end")
+    .attr("transform", "rotate(-90)")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .attr("y", -margin.left+10)
+    .attr("x", -margin.top)
+    .text("Price Var %")
+
+    d3.csv(`./dataset/${year}.csv`).then( function(data) {
+
+    
+      // Add X axis
+      var newaxis = svg.selectAll(".myXaxis")
+         .call(xAxis);
+
+        newaxis.selectAll(".tick")
+            .on("mouseout", function(d) {		
+              div.transition()		
+                  .duration(500)		
+                  .style("opacity", 0);	
+            })
+            .on("mouseover", (event, d) => {		
+                div.transition()		
+                    .duration(200)		
+                    .style("opacity", .9);		
+                div.html(`${abrev_to_sector[d]}` + "<br/>")	
+                    .style("left", (event.pageX) + "px")		
+                    .style("top", (event.pageY - 28) + "px");	
+                //handleMouseOver(d.Company) TODO 
+            })
+
+    
+      // Add Y axis
+
+      y.domain(d3.extent(data, (d) => +d.priceVar));
+        svg.selectAll(".myYaxis")
+            .call(yAxis);
+
+      // Add a scale for bubble size
+      const z = d3.scaleLinear()
+        .domain(d3.extent(data, (d) => +d["Market Capitalisation"]))
+        .range([ 4, 20]);
+    
+      // Add a scale for bubble color
+      const myColor = d3.scaleOrdinal()
+        .domain(allSectors)
+        .range(d3.schemeSet2);
+    
+      // Add dots
+       svg.append('g')
+        .selectAll(".bubbleValues")
+        .data(data)
+        .join("circle")
+          .attr("class", "bubbleValues")
+          .attr("cx", d => x(sector_to_abrev[d.Sector]))
+          .attr("cy", d => y(+d.priceVar))
+          .attr("r", d => z(d["Market Capitalisation"]))
+          .style("fill", d => myColor(sector_to_abrev[d.Sector]))
+          .style("opacity", "0.7")
+          .attr("stroke", "white")
+          .style("stroke-width", "2px")
+          .on("click", (event, d) => handleBubbleChartClick(d.Sector))
+          .on("mouseout", function(d) {		
+            div.transition()		
+                .duration(500)		
+                .style("opacity", 0);	
+          })
+          .on("mouseover", (event, d) => {		
+              div.transition()		
+                  .duration(200)		
+                  .style("opacity", .9);		
+              div.html(`${d.Company}` + "<br/>")	
+                  .style("left", (event.pageX) + "px")		
+                  .style("top", (event.pageY - 28) + "px");	
+              //handleMouseOver(d.Company) TODO 
+              })
+      })
+}
+
+function updateBubbleChart() {
+  
+    var div = d3.select("body").append("div")	
+      .attr("class", "tooltip")				
+      .style("opacity", 0);
+
+    const margin = {top: 10, right: 20, bottom: 30, left: 50}
+    const width = 400 - margin.left - margin.right;
+    const height = 230 - margin.top - margin.bottom;
+    
+
+    // append the svg object to the body of the page
+    const svg = d3.select("#gBubbleChart")
+
+    var x = d3.scaleBand()
+    .domain(allSectors)
+    .range([0, width])
+    .padding(1)
+      
+    d3.csv(`./dataset/${year}.csv`).then( function(data) {
+
+      if(sectors.length == 1){
+        let real_sector = abrev_to_sector[sectors[0]]
+        data = data.filter(d => d.Sector == real_sector)
+      }
+      // Add Y axis
+      const y = d3.scaleLinear()
+            .domain(d3.extent(data, (d) => +d.priceVar))
+            .range([height, 0]);
+      svg.select("myYaxis").call(d3.axisLeft(y));
+
+      // Add a scale for bubble size
+      const z = d3.scaleLinear()
+        .domain([0, 100])
+        .range([ 4, 40]);
+    
+      // Add a scale for bubble color
+      const myColor = d3.scaleOrdinal()
+        .domain(sectors)
+        .range(d3.schemeSet2);
+    
+      // Add dots
+      svg
+      .selectAll(".bubbleValues")
+      .data(data, (d) => d.Company)
+      .join(
+        (enter) => {
+          circles = enter
+            .append("circle")
+            .attr("class","bubbleValues")
+            .attr("cx", d => x(sector_to_abrev[d.Sector]))
+            .attr("cy", d => y(d.priceVar))
+            .attr("r", d => z(d["Market Capitalisation"]))
+            .attr("fill", d => myColor(d.Sector))
+            .style("opacity", "0.7")
+            .attr("stroke", "white")
+            .style("stroke-width", "2px")
+            .on("click", (event, d) => handleClick(d))
+            .append("title")
+            .text((d) => d.Company);
+          circles
+            .transition()
+            .duration(1000)
+            .attr("cy", d => y(d.priceVar))
+          circles.append("title").text((d) => d.Company);
+        },
+        (update) => {
+          update
+            .attr("cx", d => x(sector_to_abrev[d.Sector]))
+            .attr("cy", (d) => y(+d.priceVar))
+            .attr("r", d => z(d["Market Capitalisation"]))
+        },
+        (exit) => {
+          exit.remove();
+        }
+      );
+    })
+}
 // Handle Events
 
 function handleMouseOver(company) {
+  //circles in bubble chart
+  d3.selectAll(".bubbleValues")
+  .filter(d => d.Company == company)
+  .style("fill", "black")
+
   //circles in line chart
   d3.selectAll(".lineValues")
     .filter(d => d.Company == company)
@@ -526,6 +756,14 @@ function handleMouseOver(company) {
 function handleMouseLeave(company) {
   color = randomColor()
 
+  const sectorColor = d3.scaleOrdinal()
+  .domain(allSectors)
+  .range(d3.schemeSet2);
+
+  d3.selectAll(".bubbleValues")
+  .filter(d => d.Company == company)
+  .style("fill", (d) => sectorColor(sector_to_abrev[d.Sector]))
+
   d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
   
   d3.selectAll(".lineValues")
@@ -542,6 +780,14 @@ function handleMouseLeave(company) {
 }
 
 function handleLineChartMouseLeave(company, color) {
+  const sectorColor = d3.scaleOrdinal()
+  .domain(allSectors)
+  .range(d3.schemeSet2);
+
+  d3.selectAll(".bubbleValues")
+  .filter(d => d.Company == company)
+  .style("fill", (d) => sectorColor(sector_to_abrev[d.Sector]))
+  
 
   d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
 
@@ -570,6 +816,12 @@ function handleLineChartMouseClick(company) {
   updateLineChart()  
 }
 
+function handleBubbleChartClick(sector) {
+  let abrev = sector_to_abrev[sector]
+  sectors = sectors.filter(s => s == abrev)
+  updateAll()
+}
+
 function randomColor() {
   colors = ["blue", "steelblue", "orange", "yellow", "green", "purple", "red", "pink" ]
   let random = Math.floor(Math.random() * 8);
@@ -585,4 +837,5 @@ function updateAll() {
     updateScatterPlot(`vi${i+1}`, defaultIndicators[i])
 
   updateLineChart()
+  updateBubbleChart()
 }
