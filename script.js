@@ -2,7 +2,14 @@ var year = 2014
 var defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
 var indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
 var indexToRemove = 0
-var defaultCompanies = ["PG", "KR", "GIS"]
+var defaultCompanies = ["PG", "KR", "GIS", "OHAI"]
+var selectedCompanies = ["PG", "KR", "GIS", "OHAI"]
+var selectedColors = new Map();
+selectedColors.set("PG","red")
+selectedColors.set("KR","green") 
+selectedColors.set("GIS","yellow")
+selectedColors.set("OHAI","purple")
+var availableColors = ["red", "green", "yellow", "purple", "orange"]
 var sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
 var allSectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
 
@@ -18,6 +25,7 @@ var abrev_to_sector = {"CD":"Consumer Defensive", "BM":"Basic Materials", "H":"H
 
 
 function init() {
+  updateColorLabels()
   for(let i=0; i < defaultIndicators.length; i++)
     createScatterPlot(`vi${i+1}`, defaultIndicators[i])
 
@@ -127,7 +135,12 @@ function createScatterPlot(id, indicator) {
       .attr("cx", (d) => x(d[indicator]))
       .attr("cy", (d) => y(d.priceVar))
       .attr("r", 2)
-      .style("fill", "steelblue")
+      .style("fill", (d) => {
+        return selectedCompanies.includes(d.Company) ?
+        selectedColors.get(d.Company)
+        :
+        "steelblue"
+      })
       .on("mouseover", (event, d) => {	
         div.transition()		
             .duration(200)		
@@ -195,7 +208,12 @@ function updateScatterPlot(id, indicator) {
             .attr("cx", (d) => x(+d[indicator]))
             .attr("cy", (d) => y(0))
             .attr("r", 2)
-            .style("fill", "steelblue")
+            .style("fill", (d) => {
+              return selectedCompanies.includes(d.Company) ?
+              selectedColors.get(d.Company)
+              :
+              "steelblue"
+            })
             .on("mouseover", (event, d) => {	
               div.transition()		
                   .duration(200)		
@@ -312,7 +330,7 @@ function createLineChart(id) {
   .data(sumstat, d => d[0])
   .join("path")
     .attr("fill", "none")
-    .attr("stroke", function(d){ return color(d[0])})
+    .attr("stroke", function(d){ return selectedColors.get(d[0])})
     .attr("stroke-width", 1.5)
     .attr("class", "lineTest")
     .attr("d", function(d){
@@ -335,7 +353,7 @@ function createLineChart(id) {
           .duration(500)		
           .style("opacity", 0);	
   })
-  .on("mouseleave", (event, d) => handleLineChartMouseLeave(d[0], color(d[0])))			
+  .on("mouseleave", (event, d) => handleLineChartMouseLeave(d[0], selectedColors.get(d[0])))			
   .on("click", (event, d) => {
       handleLineChartMouseClick(d[0])
       div.transition()		
@@ -351,7 +369,7 @@ function createLineChart(id) {
       .attr("cx", (d) => x(d.year))
       .attr("cy", (d) => y(+d.priceVar))
       .attr("r", 3.3)
-      .style("fill", d => color(d.Company))
+      .style("fill", d => selectedColors.get(d.Company))
       .on("click", (event, d) => {
         handleLineChartMouseClick(d.Company)
         div.transition()		
@@ -367,7 +385,7 @@ function createLineChart(id) {
             .style("top", (event.pageY - 28) + "px");	
         handleMouseOver(d.Company)
         })	
-      .on("mouseleave", (event, d) => handleLineChartMouseLeave(d.Company, color(d.Company)))
+      .on("mouseleave", (event, d) => handleLineChartMouseLeave(d.Company, selectedColors.get(d.Company)))
       .on("mouseout", function(d) {		
         div.transition()		
             .duration(500)		
@@ -400,7 +418,7 @@ function updateLineChart() {
     const color = d3.scaleOrdinal()
       .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
 
-    data = data.filter(d => defaultCompanies.includes(d.Company) )
+    data = data.filter(d => selectedCompanies.includes(d.Company) )
 
     const sumstat = d3.group(data, d => d.Company);
 
@@ -441,7 +459,7 @@ function updateLineChart() {
                   (d[1])
               })
         .attr("fill", "none")
-        .attr("stroke", function(d){ return color(d[0]) })
+        .attr("stroke", function(d){ return selectedColors.get(d[0]) })
         .attr("stroke-width", 1.5)
         .on("mouseover", (event, d) => {	
           div.transition()		
@@ -452,7 +470,7 @@ function updateLineChart() {
               .style("top", (event.pageY - 28) + "px");	
           handleMouseOver(d[0])
           })		
-        .on("mouseleave", (event, d) => handleLineChartMouseLeave(d[0], color(d[0])))			
+        .on("mouseleave", (event, d) => handleLineChartMouseLeave(d[0], selectedColors.get(d[0])))			
         .on("mouseout", function(d) {		
             div.transition()		
                 .duration(500)		
@@ -488,7 +506,7 @@ function updateLineChart() {
             .attr("cx", (d) => x(d.year))
             .attr("cy", (d) => y(+d.priceVar))
             .attr("r", 3.3)
-            .style("fill", d => color(d.Company))
+            .style("fill", d => selectedColors.get(d.Company))
             .on("mouseout", function(d) {		
               div.transition()		
                   .duration(500)		
@@ -503,7 +521,7 @@ function updateLineChart() {
                   .style("top", (event.pageY - 28) + "px");	
               handleMouseOver(d.Company)
               })	
-            .on("mouseleave", (event, d) => handleLineChartMouseLeave(d.Company, color(d.Company)))
+            .on("mouseleave", (event, d) => handleLineChartMouseLeave(d.Company, selectedColors.get(d.Company)))
             .on("click", (event, d) => {
               handleLineChartMouseClick(d.Company)
               div.transition()		
@@ -516,7 +534,7 @@ function updateLineChart() {
             .attr("cx", (d) => x(d.year))
             .attr("cy", (d) => y(+d.priceVar))
             .attr("r", 3.3)
-            .style("fill", d => color(d.Company));
+            .style("fill", d => selectedColors.get(d.Company));
         },
         (exit) => {
           exit.remove();
@@ -645,8 +663,9 @@ function createBubbleChart(id) {
               div.html(`${d.Company}` + "<br/>")	
                   .style("left", (event.pageX) + "px")		
                   .style("top", (event.pageY - 28) + "px");	
-              //handleMouseOver(d.Company) TODO 
+              handleMouseOver(d.Company)
               })
+            .on("mouseleave", (event,d) => handleMouseLeave(d.Company))
       })
 }
 
@@ -887,12 +906,12 @@ function handleMouseOver(company) {
 }
 
 function handleMouseLeave(company) {
-  color = randomColor()
 
   const sectorColor = d3.scaleOrdinal()
   .domain(allSectors)
   .range(d3.schemeSet2);
 
+  //parallel coordinates lines
   d3.selectAll(".myPath")
   .filter(d => d.Company == company)
   .style("stroke-width", 1.5)
@@ -903,18 +922,29 @@ function handleMouseLeave(company) {
   .filter(d => d.Company == company)
   .style("fill", (d) => sectorColor(sector_to_abrev[d.Sector]))
 
-  d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
+  //scatterplots dot
+  d3.selectAll(".itemValue")
+    .style("fill", (d) => {
+      return selectedCompanies.includes(d.Company) ?
+      selectedColors.get(d.Company)
+      :
+      "steelblue"
+    })
+    .attr("r", 2);
   
+
+  // dots in Line Chart
   d3.selectAll(".lineValues")
     .filter(d => d.Company == company)
     .attr("r", 3.3)
-    .style("fill", color);
+    .style("fill", (d) => selectedColors.get(d.Company));
     
+  //line chart lines
   d3.selectAll(".lineTest")
     .filter(function (d, i) {
       return d[0] == company;
     })
-    .attr("stroke", color)
+    .attr("stroke", (d) => selectedColors.get(d[0]))
     .style("stroke-width", 1.5);
 }
 
@@ -934,7 +964,14 @@ function handleLineChartMouseLeave(company, color) {
   .style("fill", (d) => sectorColor(sector_to_abrev[d.Sector]))
 
 
-  d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
+  d3.selectAll(".itemValue")
+    .style("fill", (d) => {
+      return selectedCompanies.includes(d.Company) ?
+      selectedColors.get(d.Company)
+      :
+      "steelblue"
+    })
+    .attr("r", 2);
 
   d3.selectAll(".lineValues")
   .filter(d => d.Company == company)
@@ -951,19 +988,34 @@ function handleLineChartMouseLeave(company, color) {
 }
 
 function handleLineChartMouseClick(company) {
-  if(defaultCompanies.includes(company)){
-    d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
+  if(selectedCompanies.includes(company)){
+    selectedCompanies = selectedCompanies.filter(d => d !== company)
+    selectedColors.delete(company)
+    d3.selectAll(".itemValue")
+      .style("fill", (d) => {
+        return selectedCompanies.includes(d.Company) ?
+        selectedColors.get(d.Company)
+        :
+        "steelblue"
+      }).attr("r", 2);
     d3.selectAll(".lineTest").style("stroke-width", 1.5);
-    defaultCompanies = defaultCompanies.filter(d => d !== company)
   }
-  else
-    defaultCompanies.push(company)
+  else{
+    selectedCompanies.push(company)
+    selectedColors.set(company, getFreeColor())
+  }
   updateLineChart()  
+  updateColorLabels()
+
 }
 
 function handleBubbleChartClick(sector) {
-  let abrev = sector_to_abrev[sector]
-  sectors = sectors.filter(s => s == abrev)
+  if(sectors.length == 1)
+    sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
+  else{
+    let abrev = sector_to_abrev[sector]
+    sectors = sectors.filter(s => s == abrev)
+  }
   updateAll()
 }
 
@@ -988,6 +1040,7 @@ function updateAll() {
   updateBubbleChart()
   d3.select("#gParallelCoordinatesChart").remove()
   createParallelCoordinates()
+  updateColorLabels()
 }
 
 // Auxiliar functions
@@ -1009,4 +1062,20 @@ function pathColorParallel(priceVar) {
     return "lightgreen"
   else 
     return "green"
+}
+
+function getFreeColor(){
+  const colors = [...selectedColors.values()]
+  for(let i=0; i < availableColors.length; i++)
+    if(!colors.includes(availableColors[i]))
+      return availableColors[i]
+}
+
+function updateColorLabels(){
+    texto = ""
+    for(let i=0; i < selectedCompanies.length; i++)
+      texto += `<h3><span class="dot" style="background-color:${selectedColors.get(selectedCompanies[i])}"></span>${selectedCompanies[i]}<h3>\n`
+   
+    div = d3.select("#colors")
+    div.html(texto)	
 }

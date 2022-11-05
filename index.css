@@ -27,3 +27,16 @@ div.tooltip {
     border-radius: 8px;			
     pointer-events: none;
 }
+
+.dot {
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+h3 {
+    display: inline;
+    font-size: 15px;
+    margin-right: 10px;
+}
