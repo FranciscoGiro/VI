@@ -1,5 +1,7 @@
 var year = 2014
-var defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"] 
+var defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
+var indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
+var indexToRemove = 0
 var defaultCompanies = ["PG", "KR", "GIS"]
 var sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
 var allSectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
@@ -13,12 +15,15 @@ var abrev_to_sector = {"CD":"Consumer Defensive", "BM":"Basic Materials", "H":"H
                 "CS":"Communication Services", "E":"Energy", "FS":"Financial Services", "U":"Utilities"}
 
 
+
+
 function init() {
   for(let i=0; i < defaultIndicators.length; i++)
     createScatterPlot(`vi${i+1}`, defaultIndicators[i])
 
     createLineChart("#vi8")
     createBubbleChart("#vi9")
+    createParallelCoordinates("#vi10")
 
   d3.select("#b2014").on("click", () => {
     year = 2014
@@ -43,9 +48,9 @@ function init() {
     updateAll()
   });
   d3.select("#reset").on("click", () => {
-    sector = ""
     year = 2014
-    defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"] 
+    indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"] 
+    indexToRemove = 0
     defaultCompanies = ["PG", "KR", "GIS"]
     sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
     updateAll()
@@ -79,6 +84,7 @@ function createScatterPlot(id, indicator) {
     .attr("text-anchor", "end")
     .attr("font-size", "12px")
     .attr("font-weight", "bold")
+    .attr("class", "indicatorText")
     .attr("x", width)
     .attr("y", height + margin.top + 10)
     .text(indicator);
@@ -161,6 +167,9 @@ function updateScatterPlot(id, indicator) {
 
     const svg = d3.select(`#gScatterPlot-${id}`);
 
+
+    svg.select(".indicatorText")
+        .text(indicator)
 
     const x = d3
       .scaleLinear()
@@ -367,7 +376,6 @@ function createLineChart(id) {
   });
 }
 
-
 function updateLineChart() {
 
 
@@ -388,7 +396,6 @@ function updateLineChart() {
       data = data.filter(d => d.Sector == real_sector)
     } */
 
-    console.log(data.length)
 
     const color = d3.scaleOrdinal()
       .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
@@ -613,7 +620,7 @@ function createBubbleChart(id) {
         .range(d3.schemeSet2);
     
       // Add dots
-       svg.append('g')
+       svg
         .selectAll(".bubbleValues")
         .data(data)
         .join("circle")
@@ -664,6 +671,7 @@ function updateBubbleChart() {
       
     d3.csv(`./dataset/${year}.csv`).then( function(data) {
 
+      console.log(sectors)
       if(sectors.length == 1){
         let real_sector = abrev_to_sector[sectors[0]]
         data = data.filter(d => d.Sector == real_sector)
@@ -700,14 +708,25 @@ function updateBubbleChart() {
             .style("opacity", "0.7")
             .attr("stroke", "white")
             .style("stroke-width", "2px")
-            .on("click", (event, d) => handleClick(d))
-            .append("title")
-            .text((d) => d.Company);
+            .on("click", (event, d) => handleBubbleChartClick(d.Sector))
+            .on("mouseout", function(d) {		
+              div.transition()		
+                  .duration(500)		
+                  .style("opacity", 0);	
+            })
+            .on("mouseover", (event, d) => {		
+                div.transition()		
+                    .duration(200)		
+                    .style("opacity", .9);		
+                div.html(`${d.Company}` + "<br/>")	
+                    .style("left", (event.pageX) + "px")		
+                    .style("top", (event.pageY - 28) + "px");	
+                //handleMouseOver(d.Company) TODO 
+                })
           circles
             .transition()
             .duration(1000)
             .attr("cy", d => y(d.priceVar))
-          circles.append("title").text((d) => d.Company);
         },
         (update) => {
           update
@@ -721,9 +740,123 @@ function updateBubbleChart() {
       );
     })
 }
+
+// Parallel Coordinates
+
+function createParallelCoordinates(id) {
+
+  var div = d3.select("body").append("div")	
+  .attr("class", "tooltip")				
+  .style("opacity", 0);
+
+  const margin = {top: 30, right: 50, bottom: 10, left: 100},
+      width = 850 - margin.left - margin.right,
+      height = 250 - margin.top - margin.bottom;
+    
+    // append the svg object to the body of the page
+    const svg = d3.select("#vi10")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("id", "gParallelCoordinatesChart")
+      .attr("transform",
+            `translate(${margin.left},${margin.top})`);
+    
+    // Parse the Data
+    d3.csv(`./dataset/${year}.csv`).then( function(data) {
+
+      if(sectors.length == 1){
+        let real_sector = abrev_to_sector[sectors[0]]
+        data = data.filter(d => d.Sector == real_sector)
+      }
+
+    
+      // Here I set the list of dimension manually to control the order of axis:
+      dimensions = ["priceVar","Gross Margin","EBITDA Margin","Net Profit Margin","returnOnEquity","ROIC","returnOnAssets","Net Debt to EBITDA","Debt to Equity","PE ratio","Enterprise Value over EBITDA","priceBookValueRatio"]
+    
+      // For each dimension, I build a linear scale. I store all in a y object
+      const y = {}
+      for (i in dimensions) {
+        name = dimensions[i]
+        y[name] = d3.scaleLinear()
+          .domain(d3.extent(data, (d) => +d[name]))
+          // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
+          .range([height, 0])
+      }
+    
+      // Build the X scale -> it find the best position for each Y axis
+      x = d3.scalePoint()
+        .range([0, width])
+        .domain(dimensions);
+    
+      // Highlight the specie that is hovered
+    
+      // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
+      function path(d) {
+          return d3.line()(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
+      }
+    
+      // Draw the lines
+      svg
+        .selectAll("myPath")
+        .data(data)
+        .join("path")
+          .attr("class", "myPath" ) 
+          .attr("d",  path)
+          .style("fill", "none" )
+          .style("stroke", function(d){ return( pathColorParallel(+d.priceVar))} )
+          .style("stroke-width", 1.5)
+          .style("opacity", 0.5)
+          .on("mouseout", function(d) {		
+            div.transition()		
+                .duration(500)		
+                .style("opacity", 0);	
+          })
+          .on("mouseleave", (event, d) => handleMouseLeave(d.Company))
+          .on("mouseover", (event, d) => {		
+              div.transition()		
+                  .duration(200)		
+                  .style("opacity", .9);		
+              div.html(`${d.Company}` + "<br/>")	
+                  .style("left", (event.pageX) + "px")		
+                  .style("top", (event.pageY - 28) + "px");
+              handleMouseOver(d.Company)
+          })
+    
+      // Draw the axis:
+      svg.selectAll("myAxis")
+        // For each dimension of the dataset I add a 'g' element:
+        .data(dimensions)
+        .enter()
+        .append("g")
+        .attr("class", "axis")
+        // I translate this element to its right position on the x axis
+        .attr("transform", function(d) { return `translate(${x(d)})`})
+        // And I build the axis with the call function
+        .each(function(d) { d3.select(this).call(d3.axisLeft().scale(y[d])); })
+        .on("click", (event, d) => handleParallelCoordinatesClick(d))
+        // Add axis title
+        .append("text")
+          .style("text-anchor", "middle")
+          .attr("y", -9)
+          .text(function(d) { return d; })
+          .style("fill", "black")
+    
+    })
+}
+
+
+
 // Handle Events
 
 function handleMouseOver(company) {
+  //lines in Parallel Coordinates
+  d3.selectAll(".myPath")
+  .filter(d => d.Company == company)
+  .style("stroke-width", 3)
+  .style("stroke", "black")
+  .style("opacity", 1)
+
   //circles in bubble chart
   d3.selectAll(".bubbleValues")
   .filter(d => d.Company == company)
@@ -760,6 +893,12 @@ function handleMouseLeave(company) {
   .domain(allSectors)
   .range(d3.schemeSet2);
 
+  d3.selectAll(".myPath")
+  .filter(d => d.Company == company)
+  .style("stroke-width", 1.5)
+  .style("stroke", (d) => pathColorParallel(d.priceVar))
+  .style("opacity", 0.5)
+
   d3.selectAll(".bubbleValues")
   .filter(d => d.Company == company)
   .style("fill", (d) => sectorColor(sector_to_abrev[d.Sector]))
@@ -784,10 +923,16 @@ function handleLineChartMouseLeave(company, color) {
   .domain(allSectors)
   .range(d3.schemeSet2);
 
+  d3.selectAll(".myPath")
+  .filter(d => d.Company == company)
+  .style("stroke-width", 1.5)
+  .style("stroke", (d) => pathColorParallel(d.priceVar))
+  .style("opacity", 0.2)
+
   d3.selectAll(".bubbleValues")
   .filter(d => d.Company == company)
   .style("fill", (d) => sectorColor(sector_to_abrev[d.Sector]))
-  
+
 
   d3.selectAll(".itemValue").style("fill", "steelblue").attr("r", 2);
 
@@ -822,20 +967,46 @@ function handleBubbleChartClick(sector) {
   updateAll()
 }
 
+function handleParallelCoordinatesClick(indicator){
+  if(indicators.includes(indicator))
+    return
+  
+  indicators[indexToRemove] = indicator
+
+  indexToRemove = (indexToRemove+1) % 6
+
+  updateAll()
+}
+
+//Update All charts
+
+function updateAll() {
+  for(let i=0; i < indicators.length; i++)
+    updateScatterPlot(`vi${i+1}`, indicators[i])
+
+  updateLineChart()
+  updateBubbleChart()
+  d3.select("#gParallelCoordinatesChart").remove()
+  createParallelCoordinates()
+}
+
+// Auxiliar functions
+
 function randomColor() {
   colors = ["blue", "steelblue", "orange", "yellow", "green", "purple", "red", "pink" ]
   let random = Math.floor(Math.random() * 8);
   return colors[random]
 }
 
-
-
-//Update All charts
-
-function updateAll() {
-  for(let i=0; i < defaultIndicators.length; i++)
-    updateScatterPlot(`vi${i+1}`, defaultIndicators[i])
-
-  updateLineChart()
-  updateBubbleChart()
+function pathColorParallel(priceVar) {
+  if(priceVar < -30)
+    return "#5F021F"
+  else if(priceVar < 0)
+    return "red"
+  else if(priceVar < 10)
+    return "grey"
+  else if(priceVar < 40)
+    return "lightgreen"
+  else 
+    return "green"
 }
