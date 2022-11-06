@@ -2,8 +2,8 @@ var year = 2014
 var defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
 var indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
 var indexToRemove = 0
-var defaultCompanies = ["PG", "KR", "GIS", "OHAI"]
-var selectedCompanies = ["PG", "KR", "GIS", "OHAI"]
+var defaultCompanies = ["PG", "KR", "GIS"]
+var selectedCompanies = ["PG", "KR", "GIS"]
 var selectedColors = new Map();
 selectedColors.set("PG","red")
 selectedColors.set("KR","green") 
@@ -954,59 +954,20 @@ var svg = d3.select(id)
   
   //["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
 
-  svg.append("text")
-  .attr("text-anchor", "start")
-  .attr("font-size", "12px")
-  .attr("font-weight", "bold")
-  .attr("y", 112.5 + Math.sin(30 * Math.PI / 180)*112.5)
-  .attr("x", 112.5 + Math.cos(30 * Math.PI / 180)*112.5)
-  .attr("transform", "rotate(0)")
-  .text("returnOnAssets")
-
-  svg.append("text")
-  .attr("text-anchor", "start")
-  .attr("font-size", "10px")
-  .attr("font-weight", "bold")
-  .attr("y", 120 + Math.sin(90 * Math.PI / 180)*112.5)
-  .attr("x", 112.5 + Math.cos(90 * Math.PI / 180)*112.5)
-  .attr("transform", "rotate(0)")
-  .text("EBITDA Margin")
-
-  svg.append("text")
-  .attr("text-anchor", "start")
-  .attr("font-size", "10px")
-  .attr("font-weight", "bold")
-  .attr("y", 112.5 + Math.sin(150 * Math.PI / 180)*112.5)
-  .attr("x", 112.5 + Math.cos(150 * Math.PI / 180)*112.5)
-  .attr("transform", "rotate(20)")
-  .text("returnOnEquity")
-
-  svg.append("text")
-  .attr("text-anchor", "end")
-  .attr("font-size", "10px")
-  .attr("font-weight", "bold")
-  .attr("y", 112.5 + Math.sin(210 * Math.PI / 180)*112.5)
-  .attr("x", 112.5 + Math.cos(210 * Math.PI / 180)*112.5)
-  .attr("transform", "rotate(0)")
-  .text("ROIC")
-
-  svg.append("text")
-  .attr("text-anchor", "start")
-  .attr("font-size", "10px")
-  .attr("font-weight", "bold")
-  .attr("y", 112.5 + Math.sin(270 * Math.PI / 180)*112.5)
-  .attr("x", 112.5 + Math.cos(270 * Math.PI / 180)*112.5)
-  .attr("transform", "rotate(0)")
-  .text("Debt to Equity")
-
-  svg.append("text")
-  .attr("text-anchor", "start")
-  .attr("font-size", "10px")
-  .attr("font-weight", "bold")
-  .attr("y", 112.5 + Math.sin(330 * Math.PI / 180)*112.5)
-  .attr("x", 112.5 + Math.cos(330 * Math.PI / 180)*112.5)
-  .attr("transform", "rotate(0)")
-  .text("priceBookValueRatio")
+  let angle = 30 
+  for(let i=0; i < indicators.length; i++){
+    svg.append("text")
+    .attr("text-anchor", "start")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .attr("class", `indicator${i}`)
+    .attr("y", 112.5 + Math.sin(angle * Math.PI / 180)*112.5)
+    .attr("x", 112.5 + Math.cos(angle * Math.PI / 180)*112.5)
+    .attr("transform", "rotate(0)")
+    .text(indicators[i])
+    
+    angle += 60
+  }
 
 
   svg
@@ -1064,7 +1025,7 @@ var svg = d3.select(id)
 
       for(let i=0; i < 7; i++){
           let index = i % 6
-          let indicator = defaultIndicators[index]
+          let indicator = indicators[index]
           let value = +d[indicator] < 0 ? 0 : d[indicator]
           
           let x = Math.cos(angle * Math.PI / 180) * value*112.5/maxValues[indicator] + 112.5
@@ -1082,7 +1043,7 @@ var svg = d3.select(id)
 
       data = data.filter(d => defaultCompanies.includes(d.Company))
 
-      defaultIndicators.map( ind => 
+      indicators.map( ind => 
                           maxValues[ind] = d3.max(data, (d) => +d[ind])
       )
 
@@ -1103,6 +1064,7 @@ var svg = d3.select(id)
 
 function updateRadarChart() {
 
+
   const margin = { top: 20, right: 30, bottom: 40, left: 30 };
   const width = 250 - margin.left - margin.right;
   const height = 300 - margin.top - margin.bottom;
@@ -1110,6 +1072,12 @@ function updateRadarChart() {
 
 // append the svg object to the body of the page
   var svg = d3.select("#gRadar")
+
+  for(let i=0; i < indicators.length; i++){
+    svg.select(`.indicator${i}`)
+      .text(indicators[i])
+  }
+  
   function path(d) {
       //vamos a cada indicador
       //indicador*(XMAX-XMIN)/VALORMAXIMO + Xmin            indicador*(YMAX-YMIN)/VALORMAXIMO + Ymin
@@ -1118,7 +1086,7 @@ function updateRadarChart() {
 
       for(let i=0; i < 7; i++){
         let index = i % 6
-        let indicator = defaultIndicators[index]
+        let indicator = indicators[index]
           let value = +d[indicator] < 0 ? 0 : d[indicator]
           
           let x = Math.cos(angle * Math.PI / 180) * value*112.5/maxValues[indicator] + 112.5
@@ -1136,7 +1104,7 @@ function updateRadarChart() {
 
       data = data.filter(d => selectedCompanies.includes(d.Company))
 
-      defaultIndicators.map( ind => maxValues[ind] = d3.max(data, (d) => +d[ind]))
+      indicators.map( ind => maxValues[ind] = d3.max(data, (d) => +d[ind]))
 
       svg
     .selectAll("path.radarPath")
@@ -1312,7 +1280,7 @@ function handleLineChartMouseClick(company) {
       }).attr("r", 2);
     d3.selectAll(".lineTest").style("stroke-width", 1.5);
   }
-  else{
+  else if(selectedCompanies.length < 6){
     selectedCompanies.push(company)
     selectedColors.set(company, getFreeColor())
   }
