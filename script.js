@@ -878,6 +878,104 @@ function createParallelCoordinates(id) {
     })
 }
 
+function updateParallelCoordinates(id) {
+
+  var div = d3.select("body").append("div")	
+  .attr("class", "tooltip")				
+  .style("opacity", 0);
+
+  const margin = {top: 30, right: 50, bottom: 10, left: 100},
+      width = 850 - margin.left - margin.right,
+      height = 250 - margin.top - margin.bottom;
+    
+    // append the svg object to the body of the page
+    const svg = d3.select("#gParallelCoordinatesChart")
+    
+    // Parse the Data
+    d3.csv(`./dataset/${year}.csv`).then( function(data) {
+
+      if(sectors.length == 1){
+        let real_sector = abrev_to_sector[sectors[0]]
+        data = data.filter(d => d.Sector == real_sector)
+      }
+
+      // Here I set the list of dimension manually to control the order of axis:
+      dimensions = ["priceVar","Gross Margin","EBITDA Margin","Net Profit Margin","returnOnEquity","ROIC","returnOnAssets","Net Debt to EBITDA","Debt to Equity","PE ratio","Enterprise Value over EBITDA","priceBookValueRatio"]
+    
+      // For each dimension, I build a linear scale. I store all in a y object
+      const y = {}
+      for (i in dimensions) {
+        name = dimensions[i]
+        y[name] = d3.scaleLinear()
+          .domain(d3.extent(data, (d) => +d[name]))
+          // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
+          .range([height, 0])
+      }
+    
+      // Build the X scale -> it find the best position for each Y axis
+      x = d3.scalePoint()
+        .range([0, width])
+        .domain(dimensions);
+    
+      // Highlight the specie that is hovered
+    
+      // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
+      function path(d) {
+          return d3.line()(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
+      }
+    
+      // Draw the lines
+      svg
+        .selectAll("path.myPath")
+        .data(data)
+        .join(
+          (enter) => {
+                enter.
+                  append("path")
+                  .attr("class", "myPath" ) 
+                  .attr("d",  path)
+                  .style("fill", "none" )
+                  .style("stroke", function(d){ return( pathColorParallel(+d.priceVar))} )
+                  .style("stroke-width", 1.5)
+                  .style("opacity", 0.5)
+                  .on("mouseout", function(d) {		
+                    div.transition()		
+                        .duration(500)		
+                        .style("opacity", 0);	
+                  })
+                  .on("mouseleave", (event, d) => handleMouseLeave())
+                  .on("mouseover", (event, d) => {		
+                      div.transition()		
+                          .duration(200)		
+                          .style("opacity", .9);		
+                      div.html(`${d.Company}` + "<br/>")	
+                          .style("left", (event.pageX) + "px")		
+                          .style("top", (event.pageY - 28) + "px");
+                      handleMouseOver(d.Company)
+                  })
+                  },
+          (update) => {
+                update
+                  .attr("d",  path)
+                  .style("fill", "none" )
+                  .style("stroke", function(d){ return( pathColorParallel(+d.priceVar))} )
+          },
+          (exit) => {
+                exit.remove()
+          })
+
+
+        svg.selectAll("g.axis")
+        // For each dimension of the dataset I add a 'g' element:
+        .data(dimensions)
+        .attr("class", "axis")
+        // I translate this element to its right position on the x axis
+        .each(function(d) { d3.select(this).call(d3.axisLeft().scale(y[d])); })
+        .on("click", (event, d) => handleParallelCoordinatesClick(d))
+        // Add axis title
+    })
+}
+
 // Radar Chart
 
 function createRadarChart(id) {
@@ -1331,8 +1429,7 @@ function updateAll() {
 
   updateLineChart()
   updateBubbleChart()
-  d3.select("#gParallelCoordinatesChart").remove()
-  createParallelCoordinates()
+  updateParallelCoordinates()
   updateColorLabels()
   updateRadarChart()
 }
