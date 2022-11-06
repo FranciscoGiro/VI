@@ -2,8 +2,8 @@ var year = 2014
 var defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
 var indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
 var indexToRemove = 0
-var defaultCompanies = ["PG", "KR", "GIS"]
-var selectedCompanies = ["PG", "KR", "GIS"]
+var defaultCompanies = ["PG", "KR", "GIS", "OHAI"]
+var selectedCompanies = ["PG", "KR", "GIS", "OHAI"]
 var selectedColors = new Map();
 selectedColors.set("PG","red")
 selectedColors.set("KR","green") 
@@ -151,7 +151,7 @@ function createScatterPlot(id, indicator) {
             .style("top", (event.pageY - 28) + "px");	
         handleMouseOver(d.Company)
         })		
-      .on("mouseleave", (event, d) => handleMouseLeave(d.Company))
+      .on("mouseleave", (event, d) => handleMouseLeave())
       .on("mouseout", function(d) {		
         div.transition()		
             .duration(500)		
@@ -224,7 +224,7 @@ function updateScatterPlot(id, indicator) {
                   .style("top", (event.pageY - 28) + "px");	
               handleMouseOver(d.Company)
               })		
-            .on("mouseleave", (event, d) => handleMouseLeave(d.Company))
+            .on("mouseleave", (event, d) => handleMouseLeave())
             .on("click", (event, d) => handleLineChartMouseClick(d.Company))
             .on("mouseout", function(d) {		
               div.transition()		
@@ -354,7 +354,7 @@ function createLineChart(id) {
           .duration(500)		
           .style("opacity", 0);	
   })
-  .on("mouseleave", (event, d) => handleLineChartMouseLeave(d[0], selectedColors.get(d[0])))			
+  .on("mouseleave", (event, d) => handleMouseLeave())			
   .on("click", (event, d) => {
       handleLineChartMouseClick(d[0])
       div.transition()		
@@ -386,7 +386,7 @@ function createLineChart(id) {
             .style("top", (event.pageY - 28) + "px");	
         handleMouseOver(d.Company)
         })	
-      .on("mouseleave", (event, d) => handleLineChartMouseLeave(d.Company, selectedColors.get(d.Company)))
+      .on("mouseleave", (event, d) => handleMouseLeave())
       .on("mouseout", function(d) {		
         div.transition()		
             .duration(500)		
@@ -522,7 +522,7 @@ function updateLineChart() {
                   .style("top", (event.pageY - 28) + "px");	
               handleMouseOver(d.Company)
               })	
-            .on("mouseleave", (event, d) => handleLineChartMouseLeave(d.Company, selectedColors.get(d.Company)))
+            .on("mouseleave", (event, d) => handleLineChartMouseLeave())
             .on("click", (event, d) => {
               handleLineChartMouseClick(d.Company)
               div.transition()		
@@ -561,7 +561,6 @@ function createBubbleChart(id) {
   const height = 230 - margin.top - margin.bottom;
     
 
-    console.log(height + margin.top + margin.bottom)
     // append the svg object to the body of the page
     const svg = d3.select(id)
       .append("svg")
@@ -615,6 +614,8 @@ function createBubbleChart(id) {
          .call(xAxis);
 
         newaxis.selectAll(".tick")
+            .attr("cursor", "pointer")
+            .on("click", (event, d) => handleBubbleChartClick(abrev_to_sector[d]))
             .on("mouseout", function(d) {		
               div2.transition()		
                   .duration(500)		
@@ -628,7 +629,6 @@ function createBubbleChart(id) {
                     .style("left", (event.pageX-20) + "px")		
                     .style("top", (event.pageY+10) + "px")
                     .style("background", myColor(d));
-                //handleMouseOver(d.Company) TODO 
             })
 
     
@@ -672,7 +672,7 @@ function createBubbleChart(id) {
                   .style("top", (event.pageY - 28) + "px");	
               handleMouseOver(d.Company)
               })
-            .on("mouseleave", (event,d) => handleMouseLeave(d.Company))
+            .on("mouseleave", (event,d) => handleMouseLeave())
       })
 }
 
@@ -697,7 +697,6 @@ function updateBubbleChart() {
       
     d3.csv(`./dataset/${year}.csv`).then( function(data) {
 
-      console.log(sectors)
       if(sectors.length == 1){
         let real_sector = abrev_to_sector[sectors[0]]
         data = data.filter(d => d.Sector == real_sector)
@@ -838,7 +837,7 @@ function createParallelCoordinates(id) {
                 .duration(500)		
                 .style("opacity", 0);	
           })
-          .on("mouseleave", (event, d) => handleMouseLeave(d.Company))
+          .on("mouseleave", (event, d) => handleMouseLeave())
           .on("mouseover", (event, d) => {		
               div.transition()		
                   .duration(200)		
@@ -1060,9 +1059,10 @@ var svg = d3.select(id)
       for(let i=0; i < 7; i++){
           let index = i % 6
           let indicator = defaultIndicators[index]
+          let value = +d[indicator] < 0 ? 0 : d[indicator]
           
-          let x = Math.cos(angle * Math.PI / 180) * d[indicator]*112.5/maxValues[indicator] + 112.5
-          let y = Math.sin(angle * Math.PI / 180) * d[indicator]*112.5/maxValues[indicator] + 112.5
+          let x = Math.cos(angle * Math.PI / 180) * value*112.5/maxValues[indicator] + 112.5
+          let y = Math.sin(angle * Math.PI / 180) * value*112.5/maxValues[indicator] + 112.5
 
           pos.push([x,y])
           angle = (angle + 60) % 360
@@ -1089,13 +1089,78 @@ var svg = d3.select(id)
       .style("fill", d => selectedColors.get(d.Company))
       .style("opacity", 0.3)
       .on("mouseover", (event,d) => handleMouseOver(d.Company))
+      .on("click", (event,d) => handleLineChartMouseClick(d.Company))
       .on("mouseleave", (event,d) => handleMouseLeave())
       })
 
 }
 
+function updateRadarChart() {
+
+  const margin = { top: 20, right: 30, bottom: 40, left: 30 };
+  const width = 250 - margin.left - margin.right;
+  const height = 300 - margin.top - margin.bottom;
 
 
+// append the svg object to the body of the page
+  var svg = d3.select("#gRadar")
+  function path(d) {
+      //vamos a cada indicador
+      //indicador*(XMAX-XMIN)/VALORMAXIMO + Xmin            indicador*(YMAX-YMIN)/VALORMAXIMO + Ymin
+      var pos = []
+      var angle = 30
+
+      for(let i=0; i < 7; i++){
+        let index = i % 6
+        let indicator = defaultIndicators[index]
+          let value = +d[indicator] < 0 ? 0 : d[indicator]
+          
+          let x = Math.cos(angle * Math.PI / 180) * value*112.5/maxValues[indicator] + 112.5
+          let y = Math.sin(angle * Math.PI / 180) * value*112.5/maxValues[indicator] + 112.5
+
+          pos.push([x,y])
+          angle = (angle + 60) % 360
+
+      }
+
+      return d3.line()(pos)
+  }
+
+  d3.csv(`./dataset/${year}.csv`).then(function (data) {
+
+      data = data.filter(d => selectedCompanies.includes(d.Company))
+
+      defaultIndicators.map( ind => maxValues[ind] = d3.max(data, (d) => +d[ind]))
+
+      svg
+    .selectAll("path.radarPath")
+    .data(data)
+    .join(
+      (enter) => {
+        enter
+          .append("path")
+          .attr("class", "radarPath")
+          .attr("d", path)
+          .on("mouseover", (event,d) => handleMouseOver(d.Company))
+          .on("mouseleave", (event,d) => handleMouseLeave())
+          .on("click", (event,d) => handleLineChartMouseClick(d.Company))
+          .style("fill", d => selectedColors.get(d.Company) )
+          .style("opacity", 0.3);
+      },
+      (update) => {
+        update
+          .transition()
+          .duration(1000)
+          .attr("d", path)
+          .style("fill", d => selectedColors.get(d.Company));
+      },
+      (exit) => {
+        exit.remove()
+      }
+    )
+  })
+
+}
 
 // Handle Events
 
@@ -1139,11 +1204,11 @@ function handleMouseOver(company) {
   .filter(function (d, i) {
     return d.Company == company;
   })
-  .style("opacity", 1);
+  .style("opacity", 0.7);
 
 }
 
-function handleMouseLeave(company) {
+function handleMouseLeave() {
 
   const sectorColor = d3.scaleOrdinal()
   .domain(allSectors)
@@ -1151,13 +1216,11 @@ function handleMouseLeave(company) {
 
   //parallel coordinates lines
   d3.selectAll(".myPath")
-  .filter(d => d.Company == company)
   .style("stroke-width", 1.5)
   .style("stroke", (d) => pathColorParallel(d.priceVar))
   .style("opacity", 0.5)
 
   d3.selectAll(".bubbleValues")
-  .filter(d => d.Company == company)
   .style("fill", (d) => sectorColor(sector_to_abrev[d.Sector]))
 
   //scatterplots dot
@@ -1173,15 +1236,11 @@ function handleMouseLeave(company) {
 
   // dots in Line Chart
   d3.selectAll(".lineValues")
-    .filter(d => d.Company == company)
     .attr("r", 3.3)
     .style("fill", (d) => selectedColors.get(d.Company));
     
   //line chart lines
   d3.selectAll(".lineTest")
-    .filter(function (d, i) {
-      return d[0] == company;
-    })
     .attr("stroke", (d) => selectedColors.get(d[0]))
     .style("stroke-width", 1.5);
 
@@ -1253,6 +1312,7 @@ function handleLineChartMouseClick(company) {
   }
   updateLineChart()  
   updateColorLabels()
+  updateRadarChart()
 
 }
 
@@ -1286,6 +1346,9 @@ function updateAllExceptParallel() {
   updateLineChart()
   updateBubbleChart()
   updateColorLabels()
+  
+  updateRadarChart()
+
 }
 
 function updateAll() {
@@ -1297,6 +1360,7 @@ function updateAll() {
   d3.select("#gParallelCoordinatesChart").remove()
   createParallelCoordinates()
   updateColorLabels()
+  updateRadarChart()
 }
 
 // Auxiliar functions
