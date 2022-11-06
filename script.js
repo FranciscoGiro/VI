@@ -8,7 +8,6 @@ var selectedColors = new Map();
 selectedColors.set("PG","red")
 selectedColors.set("KR","green") 
 selectedColors.set("GIS","yellow")
-selectedColors.set("OHAI","purple")
 var availableColors = ["red", "green", "yellow", "purple", "orange"]
 var sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
 var allSectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
@@ -1153,9 +1152,22 @@ var svg = d3.select(id)
       .attr("d", path)
       .style("fill", d => selectedColors.get(d.Company))
       .style("opacity", 0.3)
-      .on("mouseover", (event,d) => handleMouseOver(d.Company))
+      .on("mouseover", (event, d) => {	
+        div.transition()		
+            .duration(200)		
+            .style("opacity", 1);		
+        div.html(d.Company)	
+            .style("left", (event.pageX) + "px")		
+            .style("top", (event.pageY - 28) + "px");	
+        handleMouseOver(d.Company)
+        })		
+      .on("mouseleave", (event, d) => handleMouseLeave())
+      .on("mouseout", function(d) {		
+        div.transition()		
+            .duration(500)		
+            .style("opacity", 0);	
+      })
       .on("click", (event,d) => handleLineChartMouseClick(d.Company))
-      .on("mouseleave", (event,d) => handleMouseLeave())
       })
 
 }
@@ -1213,11 +1225,24 @@ function updateRadarChart() {
           .append("path")
           .attr("class", "radarPath")
           .attr("d", path)
-          .on("mouseover", (event,d) => handleMouseOver(d.Company))
-          .on("mouseleave", (event,d) => handleMouseLeave())
-          .on("click", (event,d) => handleLineChartMouseClick(d.Company))
           .style("fill", d => selectedColors.get(d.Company) )
-          .style("opacity", 0.3);
+          .style("opacity", 0.3)
+          .on("mouseover", (event, d) => {	
+            div.transition()		
+                .duration(200)		
+                .style("opacity", 1);		
+            div.html(d.Company)	
+                .style("left", (event.pageX) + "px")		
+                .style("top", (event.pageY - 28) + "px");	
+            handleMouseOver(d.Company)
+            })		
+          .on("mouseleave", (event, d) => handleMouseLeave())
+          .on("mouseout", function(d) {		
+            div.transition()		
+                .duration(500)		
+                .style("opacity", 0);	
+          })
+          .on("click", (event,d) => handleLineChartMouseClick(d.Company))
       },
       (update) => {
         update
@@ -1378,7 +1403,7 @@ function handleLineChartMouseClick(company) {
       }).attr("r", 2);
     d3.selectAll(".lineTest").style("stroke-width", 1.5);
   }
-  else if(selectedCompanies.length < 6){
+  else if(selectedCompanies.length < 5){
     selectedCompanies.push(company)
     selectedColors.set(company, getFreeColor())
   }
