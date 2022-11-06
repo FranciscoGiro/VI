@@ -135,6 +135,12 @@ function createScatterPlot(id, indicator) {
       .attr("class", "circleValues itemValue")
       .attr("cx", (d) => x(d[indicator]))
       .attr("cy", (d) => y(d.priceVar))
+      .style("r", (d) => {
+        return selectedCompanies.includes(d.Company) ?
+        4
+        :
+        2
+      })
       .attr("r", 2)
       .style("fill", (d) => {
         return selectedCompanies.includes(d.Company) ?
@@ -208,7 +214,7 @@ function updateScatterPlot(id, indicator) {
             .attr("class", "circleValues itemValue")
             .attr("cx", (d) => x(+d[indicator]))
             .attr("cy", (d) => y(0))
-            .attr("r", 2)
+            .style("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2})
             .style("fill", (d) => {
               return selectedCompanies.includes(d.Company) ?
               selectedColors.get(d.Company)
@@ -866,7 +872,7 @@ function createParallelCoordinates(id) {
           .attr("y", -9)
           .text(function(d) { return d; })
           .style("fill", "black")
-          .style("cursor", d => d == "priceVar" ? "auto" : "pointer")
+          .style("cursor", d => d == "priceVar" ? "default" : "pointer")
           .attr("transform", "rotate(-20)");
     
     })
@@ -1231,7 +1237,7 @@ function handleMouseLeave() {
       :
       "steelblue"
     })
-    .attr("r", 2);
+    .style("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2});
   
 
   // dots in Line Chart
@@ -1273,7 +1279,7 @@ function handleLineChartMouseLeave(company, color) {
       :
       "steelblue"
     })
-    .attr("r", 2);
+    .style("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2});
 
   d3.selectAll(".lineValues")
   .filter(d => d.Company == company)
