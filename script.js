@@ -2,8 +2,8 @@ var year = 2014
 var defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
 var indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
 var indexToRemove = 0
-var defaultCompanies = ["PG", "KR", "GIS", "OHAI"]
-var selectedCompanies = ["PG", "KR", "GIS", "OHAI"]
+var defaultCompanies = ["PG", "KR", "GIS"]
+var selectedCompanies = ["PG", "KR", "GIS"]
 var selectedColors = new Map();
 selectedColors.set("PG","red")
 selectedColors.set("KR","green") 
@@ -20,7 +20,7 @@ var sector_to_abrev = {"Consumer Defensive":"CD", "Basic Materials":"BM", "Healt
 var abrev_to_sector = {"CD":"Consumer Defensive", "BM":"Basic Materials", "H":"Healthcare", 
                 "CC":"Consumer Cyclical", "I":"Industrials","RE":"Real Estate", "T":"Technology",
                 "CS":"Communication Services", "E":"Energy", "FS":"Financial Services", "U":"Utilities"}
-
+var maxValues = {}
 
 
 
@@ -29,6 +29,7 @@ function init() {
   for(let i=0; i < defaultIndicators.length; i++)
     createScatterPlot(`vi${i+1}`, defaultIndicators[i])
 
+    createRadarChart("#vi7")
     createLineChart("#vi8")
     createBubbleChart("#vi9")
     createParallelCoordinates("#vi10")
@@ -867,10 +868,232 @@ function createParallelCoordinates(id) {
           .text(function(d) { return d; })
           .style("fill", "black")
           .style("cursor", d => d == "priceVar" ? "auto" : "pointer")
-          .attr("transform", "rotate(-45)")
+          .attr("transform", "rotate(-20)");
     
     })
 }
+
+// Radar Chart
+
+function createRadarChart(id) {
+
+  var div = d3.select("body").append("div") 
+  .attr("class", "tooltip")               
+  .style("opacity", 0);
+// set the dimensions and margins of the graph
+const margin = { top: 20, right: 0, bottom: 40, left: 40 };
+const width = 280 - margin.left - margin.right;
+const height = 300 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select(id)
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("id", "gRadar")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append('line')
+  .style("stroke", "grey")
+  .style("stroke-width", 2)
+  .attr("x1", 112.5)
+  .attr("y1", 112.5)
+  .attr("x2", 112.5 + Math.cos(30 * Math.PI / 180)*112.5)
+  .attr("y2", 112.5 + Math.sin(30 * Math.PI / 180)*112.5)
+
+
+  svg.append('line')
+  .style("stroke", "grey")
+  .style("stroke-width", 2)
+  .attr("x1", 112.5)
+  .attr("y1", 112.5)
+  .attr("x2", 112.5 + Math.cos(90 * Math.PI / 180)*112.5)
+  .attr("y2", 112.5 + Math.sin(90 * Math.PI / 180)*112.5)
+
+
+  svg.append('line')
+  .style("stroke", "grey")
+  .style("stroke-width", 2)
+  .attr("x1", 112.5)
+  .attr("y1", 112.5)
+  .attr("x2", 112.5 + Math.cos(150 * Math.PI / 180)*112.5)
+  .attr("y2", 112.5 + Math.sin(150 * Math.PI / 180)*112.5)
+
+  svg.append('line')
+  .style("stroke", "grey")
+  .style("stroke-width", 2)
+  .attr("x1", 112.5)
+  .attr("y1", 112.5)
+  .attr("x2", 112.5 + Math.cos(210 * Math.PI / 180)*112.5)
+  .attr("y2", 112.5 + Math.sin(210 * Math.PI / 180)*112.5)
+
+  svg.append('line')
+  .style("stroke", "grey")
+  .style("stroke-width", 2)
+  .attr("x1", 112.5)
+  .attr("y1", 112.5)
+  .attr("x2", 112.5 + Math.cos(270 * Math.PI / 180)*112.5)
+  .attr("y2", 112.5 + Math.sin(270 * Math.PI / 180)*112.5)
+
+  svg.append('line')
+  .style("stroke", "grey")
+  .style("stroke-width", 2)
+  .attr("x1", 112.5)
+  .attr("y1", 112.5)
+  .attr("x2", 112.5 + Math.cos(330 * Math.PI / 180)*112.5)
+  .attr("y2", 112.5 + Math.sin(330 * Math.PI / 180)*112.5)
+
+
+  
+  //["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
+
+  svg.append("text")
+  .attr("text-anchor", "start")
+  .attr("font-size", "12px")
+  .attr("font-weight", "bold")
+  .attr("y", 112.5 + Math.sin(30 * Math.PI / 180)*112.5)
+  .attr("x", 112.5 + Math.cos(30 * Math.PI / 180)*112.5)
+  .attr("transform", "rotate(0)")
+  .text("returnOnAssets")
+
+  svg.append("text")
+  .attr("text-anchor", "start")
+  .attr("font-size", "10px")
+  .attr("font-weight", "bold")
+  .attr("y", 120 + Math.sin(90 * Math.PI / 180)*112.5)
+  .attr("x", 112.5 + Math.cos(90 * Math.PI / 180)*112.5)
+  .attr("transform", "rotate(0)")
+  .text("EBITDA Margin")
+
+  svg.append("text")
+  .attr("text-anchor", "start")
+  .attr("font-size", "10px")
+  .attr("font-weight", "bold")
+  .attr("y", 112.5 + Math.sin(150 * Math.PI / 180)*112.5)
+  .attr("x", 112.5 + Math.cos(150 * Math.PI / 180)*112.5)
+  .attr("transform", "rotate(20)")
+  .text("returnOnEquity")
+
+  svg.append("text")
+  .attr("text-anchor", "end")
+  .attr("font-size", "10px")
+  .attr("font-weight", "bold")
+  .attr("y", 112.5 + Math.sin(210 * Math.PI / 180)*112.5)
+  .attr("x", 112.5 + Math.cos(210 * Math.PI / 180)*112.5)
+  .attr("transform", "rotate(0)")
+  .text("ROIC")
+
+  svg.append("text")
+  .attr("text-anchor", "start")
+  .attr("font-size", "10px")
+  .attr("font-weight", "bold")
+  .attr("y", 112.5 + Math.sin(270 * Math.PI / 180)*112.5)
+  .attr("x", 112.5 + Math.cos(270 * Math.PI / 180)*112.5)
+  .attr("transform", "rotate(0)")
+  .text("Debt to Equity")
+
+  svg.append("text")
+  .attr("text-anchor", "start")
+  .attr("font-size", "10px")
+  .attr("font-weight", "bold")
+  .attr("y", 112.5 + Math.sin(330 * Math.PI / 180)*112.5)
+  .attr("x", 112.5 + Math.cos(330 * Math.PI / 180)*112.5)
+  .attr("transform", "rotate(0)")
+  .text("priceBookValueRatio")
+
+
+  svg
+  .append('path')
+  .attr('d', d3.line()([[112.5 + Math.cos(30 * Math.PI / 180)*112.5, 112.5 + Math.sin(30 * Math.PI / 180)*112.5], 
+                        [112.5 + Math.cos(90 * Math.PI / 180)*112.5, 112.5 + Math.sin(90 * Math.PI / 180)*112.5], 
+                        [112.5 + Math.cos(150 * Math.PI / 180)*112.5, 112.5 + Math.sin(150 * Math.PI / 180)*112.5], 
+                        [112.5 + Math.cos(210 * Math.PI / 180)*112.5, 112.5 + Math.sin(210 * Math.PI / 180)*112.5], 
+                        [112.5 + Math.cos(270 * Math.PI / 180)*112.5,112.5 + Math.sin(270 * Math.PI / 180)*112.5],
+                        [112.5 + Math.cos(330 * Math.PI / 180)*112.5,112.5 + Math.sin(330 * Math.PI / 180)*112.5],
+                        [112.5 + Math.cos(30 * Math.PI / 180)*112.5,112.5 + Math.sin(30 * Math.PI / 180)*112.5]],
+                        ))
+  .attr("fill", "none")
+  .attr("stroke", "grey")
+  .attr("opacity", 0.3)
+  .attr("stroke-width", 2)
+
+
+  svg
+  .append('path')
+  .attr('d', d3.line()([[112.5 + Math.cos(30 * Math.PI / 180)*37.5, 112.5 + Math.sin(30 * Math.PI / 180)*37.5], 
+                        [112.5 + Math.cos(90 * Math.PI / 180)*37.5, 112.5 + Math.sin(90 * Math.PI / 180)*37.5], 
+                        [112.5 + Math.cos(150 * Math.PI / 180)*37.5, 112.5 + Math.sin(150 * Math.PI / 180)*37.5], 
+                        [112.5 + Math.cos(210 * Math.PI / 180)*37.5, 112.5 + Math.sin(210 * Math.PI / 180)*37.5], 
+                        [112.5 + Math.cos(270 * Math.PI / 180)*37.5,112.5 + Math.sin(270 * Math.PI / 180)*37.5],
+                        [112.5 + Math.cos(330 * Math.PI / 180)*37.5,112.5 + Math.sin(330 * Math.PI / 180)*37.5],
+                        [112.5 + Math.cos(30 * Math.PI / 180)*37.5,112.5 + Math.sin(30 * Math.PI / 180)*37.5]],
+                        ))
+  .attr("fill", "none")
+  .attr("stroke", "grey")
+  .attr("opacity", 0.3)
+  .attr("stroke-width", 2)
+
+  svg
+  .append('path')
+  .attr('d', d3.line()([[112.5 + Math.cos(30 * Math.PI / 180)*75, 112.5 + Math.sin(30 * Math.PI / 180)*75], 
+                        [112.5 + Math.cos(90 * Math.PI / 180)*75, 112.5 + Math.sin(90 * Math.PI / 180)*75], 
+                        [112.5 + Math.cos(150 * Math.PI / 180)*75, 112.5 + Math.sin(150 * Math.PI / 180)*75], 
+                        [112.5 + Math.cos(210 * Math.PI / 180)*75, 112.5 + Math.sin(210 * Math.PI / 180)*75], 
+                        [112.5 + Math.cos(270 * Math.PI / 180)*75,112.5 + Math.sin(270 * Math.PI / 180)*75],
+                        [112.5 + Math.cos(330 * Math.PI / 180)*75,112.5 + Math.sin(330 * Math.PI / 180)*75],
+                        [112.5 + Math.cos(30 * Math.PI / 180)*75,112.5 + Math.sin(30 * Math.PI / 180)*75]],
+                        ))
+  .attr("fill", "none")
+  .attr("stroke", "grey")
+  .attr("opacity", 0.3)
+  .attr("stroke-width", 2)
+
+
+  function path(d) {
+      //vamos a cada indicador
+      //indicador*(XMAX-XMIN)/VALORMAXIMO + Xmin            indicador*(YMAX-YMIN)/VALORMAXIMO + Ymin
+      var pos = []
+      var angle = 30
+
+      for(let i=0; i < 7; i++){
+          let index = i % 6
+          let indicator = defaultIndicators[index]
+          
+          let x = Math.cos(angle * Math.PI / 180) * d[indicator]*112.5/maxValues[indicator] + 112.5
+          let y = Math.sin(angle * Math.PI / 180) * d[indicator]*112.5/maxValues[indicator] + 112.5
+
+          pos.push([x,y])
+          angle = (angle + 60) % 360
+
+      }
+
+      return d3.line()(pos)
+  }
+
+  d3.csv("./dataset/2014.csv").then(function (data) {
+
+      data = data.filter(d => defaultCompanies.includes(d.Company))
+
+      defaultIndicators.map( ind => 
+                          maxValues[ind] = d3.max(data, (d) => +d[ind])
+      )
+
+      svg
+      .selectAll("radarPath")
+      .data(data, d => d.Company)
+      .join("path")
+      .attr("class", "radarPath" ) 
+      .attr("d", path)
+      .style("fill", d => selectedColors.get(d.Company))
+      .style("opacity", 0.3)
+      .on("mouseover", (event,d) => handleMouseOver(d.Company))
+      .on("mouseleave", (event,d) => handleMouseLeave())
+      })
+
+}
+
 
 
 
@@ -910,6 +1133,13 @@ function handleMouseOver(company) {
     })
     .attr("stroke", "black")
     .style("stroke-width", 3);
+
+  //radar chart
+  d3.selectAll(".radarPath")
+  .filter(function (d, i) {
+    return d.Company == company;
+  })
+  .style("opacity", 1);
 
 }
 
@@ -954,7 +1184,12 @@ function handleMouseLeave(company) {
     })
     .attr("stroke", (d) => selectedColors.get(d[0]))
     .style("stroke-width", 1.5);
-}
+
+
+    //radar chart
+      d3.selectAll(".radarPath")
+        .style("opacity", 0.3);
+  }
 
 function handleLineChartMouseLeave(company, color) {
   const sectorColor = d3.scaleOrdinal()
@@ -993,6 +1228,10 @@ function handleLineChartMouseLeave(company, color) {
     })
     .attr("stroke", color)
     .style("stroke-width", 1.5);
+
+    //radar chart
+    d3.selectAll(".radarPath")
+    .style("opacity", 0.3);
 }
 
 function handleLineChartMouseClick(company) {
