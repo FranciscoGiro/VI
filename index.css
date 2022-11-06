@@ -18,7 +18,7 @@
 div.tooltip {	
     position: absolute;			
     text-align: center;			
-    width: 60px;					
+    width: fit-content;				
     height: 20px;					
     padding-top: 5px;				
     font: 12px sans-serif;		
@@ -26,6 +26,19 @@ div.tooltip {
     border: 0px;		
     border-radius: 8px;			
     pointer-events: none;
+}
+
+
+div.sectorName {	
+    position: absolute;			
+    text-align: center;			
+    width: fit-content;				
+    height: 20px;					
+    padding-top: 5px;				
+    font: 12px sans-serif;		
+    border-style: double;
+    pointer-events: none;
+    border-radius: 8px;	
 }
 
 .dot {

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <meta charset="UTF-8" />
+  <title>Radar</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<!-- Create a div where the graph will take place -->
+<button onclick="add()">add</button>
+<button onclick="remove()">remove</button>
+<div id="my_dataviz"></div>
+
+<style>
+  div.tooltip {
+  position: absolute;
+  text-align: center;
+  width: 60px;
+  height: 28px;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+</style>
+
+<script>
+
+  var defaultCompanies = ["PG", "KR"]
+  var colors = {"PG":"orange", "KR":"blue", "IBM":"black"}
+  var defaultIndicators = ["returnOnAssets", "ROIC", "priceBookValueRatio", "PE ratio"]
+  var maxValues = {}
+  var positions = [[255,255,0,255] , [0,255,255,255], [255,255,255,510], [255,510,255,255]]
+
+  
+
+  function createRadarChart() {
+
+    var div = d3.select("body").append("div") 
+    .attr("class", "tooltip")               
+    .style("opacity", 0);
+  // set the dimensions and margins of the graph
+  var margin = {top: 10, right: 30, bottom: 30, left: 50},
+      width = 600 - margin.left - margin.right,
+      height = 600 - margin.top - margin.bottom;
+  
+  // append the svg object to the body of the page
+  var svg = d3.select("#my_dataviz")
+    .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("id", "gRadar")
+      .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+
+/*     indicador*(XMAX-XMIN)/VALORMAXIMO + Xmin            indicador*(YMAX-YMIN)/VALORMAXIMO + Ymin
+
+
+    width  --- valor maximo
+    x      ---   valor do indicador
+ */
+
+    svg.append('line')
+    .style("stroke", "grey")
+    .style("stroke-width", 2)
+    .attr("x1", 0)
+    .attr("y1", 255)
+    .attr("x2", 255)
+    .attr("y2", 255);
+
+    svg.append('line')
+    .style("stroke", "grey")
+    .style("stroke-width", 2)
+    .attr("x1", 255)
+    .attr("y1", 255)
+    .attr("x2", 510)
+    .attr("y2", 255);
+
+    svg.append('line')
+    .style("stroke", "grey")
+    .style("stroke-width", 2)
+    .attr("x1", 255)
+    .attr("y1", 0)
+    .attr("x2", 255)
+    .attr("y2", 255);
+
+    svg.append('line')
+    .style("stroke", "grey")
+    .style("stroke-width", 2)
+    .attr("x1", 255)
+    .attr("y1", 255)
+    .attr("x2", 255)
+    .attr("y2", 510);
+
+
+    svg
+    .append('path')
+    .attr('d', d3.line()([[0, 255], [255, 510], [510, 255], [255, 0], [0,255]]))
+    .attr("fill", "none")
+    .attr("stroke", "grey")
+    .attr("opacity", 0.3)
+    .attr("stroke-width", 2)
+
+
+
+
+    svg
+    .append('path')
+    .attr('d', d3.line()([[85,255], [255, 425], [425, 255], [255, 85], [85,255]]))
+    .attr("fill", "none")
+    .attr("stroke", "grey")
+    .attr("opacity", 0.3)
+    .attr("stroke-width", 2)
+
+    svg
+    .append('path')
+    .attr('d', d3.line()([[170,255], [255, 340], [340, 255], [255, 170], [170,255]]))
+    .attr("fill", "none")
+    .attr("stroke", "grey")
+    .attr("opacity", 0.3)
+    .attr("stroke-width", 2)
+
+
+
+    function path(d) {
+        //vamos a cada indicador
+        //indicador*(XMAX-XMIN)/VALORMAXIMO + Xmin            indicador*(YMAX-YMIN)/VALORMAXIMO + Ymin
+        var pos = []
+
+        for(let i=0; i < 5; i++){
+            let index = i % 4
+            indicator = defaultIndicators[index]
+            values = positions[index]
+
+            let x = d[indicator]*(values[1]-values[0])/maxValues[indicator] + values[0]
+            let y = d[indicator]*(values[3]-values[2])/maxValues[indicator] + values[2]
+
+            if(index == 0){
+              y = Math.abs(y-255)
+            }
+            else if(index == 1){
+              x = Math.abs(x-255)
+            }
+
+            pos.push([x,y])
+
+        }
+
+        return d3.line()(pos)
+    }
+
+    d3.csv("./dataset/2014.csv").then(function (data) {
+
+        data = data.filter(d => defaultCompanies.includes(d.Company))
+
+        defaultIndicators.map( ind => 
+                            maxValues[ind] = d3.max(data, (d) => +d[ind])
+        )
+
+        console.log(maxValues)
+
+        svg
+        .selectAll("myPath")
+        .data(data, d => d.Company)
+        .join("path")
+          .attr("class", "myPath" ) 
+          .attr("d",  path)
+          .style("fill", d => colors[d.Company] )
+          .style("opacity", 0.3)
+          .on("mouseover", (event, d) => {	
+              div.transition()		
+                  .duration(200)		
+                  .style("opacity", 1);		
+              div.html(d.Company)	
+                  .style("left", (event.pageX) + "px")		
+                  .style("top", (event.pageY - 28) + "px");	
+              handleMouseOver(d.Company)
+              })		
+            .on("mouseleave", (event, d) => handleMouseLeave())
+            .on("mouseout", function(d) {		
+              div.transition()		
+                  .duration(500)		
+                  .style("opacity", 0);	
+            })
+    })
+
+  }
+
+
+  function updateRadarChart() {
+  var margin = {top: 10, right: 30, bottom: 30, left: 50},
+      width = 600 - margin.left - margin.right,
+      height = 600 - margin.top - margin.bottom;
+  
+  // append the svg object to the body of the page
+  var svg = d3.select("#gRadar")
+  function path(d) {
+        var pos = []
+
+        for(let i=0; i < 5; i++){
+            let index = i % 4
+            indicator = defaultIndicators[index]
+            values = positions[index]
+
+            let x = d[indicator]*(values[1]-values[0])/maxValues[indicator] + values[0]
+            let y = d[indicator]*(values[3]-values[2])/maxValues[indicator] + values[2]
+
+            if(index == 0){
+              y = Math.abs(y-255)
+            }
+            else if(index == 1){
+              x = Math.abs(x-255)
+            }
+
+            pos.push([x,y])
+
+        }
+
+        return d3.line()(pos)
+    }
+
+    d3.csv("./dataset/2014.csv").then(function (data) {
+
+        data = data.filter(d => defaultCompanies.includes(d.Company))
+
+        console.log(data)
+
+        defaultIndicators.map( ind => 
+                            maxValues[ind] = d3.max(data, (d) => +d[ind])
+        )
+
+        svg
+      .selectAll("path.myPath")
+      .data(data)
+      .join(
+        (enter) => {
+          enter
+            .append("path")
+            .attr("class", "myPath")
+            .attr("d", path)
+            .style("fill", d => colors[d.Company] )
+            .style("opacity", 0.3);
+        },
+        (update) => {
+          update
+          .transition()
+          .duration(1000)
+          .attr("d", path)
+          .style("fill", d => colors[d.Company]);
+        },
+        (exit) => {
+          exit.remove()
+        }
+      )
+    })
+
+  }
+
+  createRadarChart()
+
+  updateRadarChart()
+
+  function add() {
+    defaultCompanies.push("IBM")
+    updateRadarChart()
+  }
+
+  function remove() {
+    defaultCompanies = defaultCompanies.filter(d => d != "IBM")
+    updateRadarChart()
+  }
+
+  function handleMouseOver(company) {
+    d3.selectAll(".myPath")
+      .filter(d => d.Company == company)
+      .style("stroke-width", 3)
+      .style("stroke", "black")
+      .style("opacity", 1)
+  }
+
+  function handleMouseLeave() {
+    d3.selectAll(".myPath")
+      .style("stroke", d => colors[d])
+      .style("opacity", 0.3)
+  }
+  </script>

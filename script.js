@@ -550,6 +550,10 @@ function createBubbleChart(id) {
   var div = d3.select("body").append("div")	
     .attr("class", "tooltip")				
     .style("opacity", 0);
+  
+  var div2 = d3.select("body").append("div")	
+    .attr("class", "sectorName")				
+    .style("opacity", 0);
 
   const margin = {top: 10, right: 20, bottom: 30, left: 50}
   const width = 400 - margin.left - margin.right;
@@ -597,6 +601,11 @@ function createBubbleChart(id) {
     .attr("x", -margin.top)
     .text("Price Var %")
 
+    // Add a scale for bubble color
+    const myColor = d3.scaleOrdinal()
+    .domain(allSectors)
+    .range(d3.schemeSet2);
+
     d3.csv(`./dataset/${year}.csv`).then( function(data) {
 
     
@@ -606,17 +615,18 @@ function createBubbleChart(id) {
 
         newaxis.selectAll(".tick")
             .on("mouseout", function(d) {		
-              div.transition()		
+              div2.transition()		
                   .duration(500)		
                   .style("opacity", 0);	
             })
             .on("mouseover", (event, d) => {		
-                div.transition()		
+                div2.transition()		
                     .duration(200)		
                     .style("opacity", .9);		
-                div.html(`${abrev_to_sector[d]}` + "<br/>")	
-                    .style("left", (event.pageX) + "px")		
-                    .style("top", (event.pageY - 28) + "px");	
+                div2.html(`${abrev_to_sector[d]}` + "<br/>")	
+                    .style("left", (event.pageX-20) + "px")		
+                    .style("top", (event.pageY+10) + "px")
+                    .style("background", myColor(d));
                 //handleMouseOver(d.Company) TODO 
             })
 
@@ -631,11 +641,7 @@ function createBubbleChart(id) {
       const z = d3.scaleLinear()
         .domain(d3.extent(data, (d) => +d["Market Capitalisation"]))
         .range([ 4, 20]);
-    
-      // Add a scale for bubble color
-      const myColor = d3.scaleOrdinal()
-        .domain(allSectors)
-        .range(d3.schemeSet2);
+  
     
       // Add dots
        svg
@@ -860,6 +866,8 @@ function createParallelCoordinates(id) {
           .attr("y", -9)
           .text(function(d) { return d; })
           .style("fill", "black")
+          .style("cursor", d => d == "priceVar" ? "auto" : "pointer")
+          .attr("transform", "rotate(-45)")
     
     })
 }
@@ -1020,17 +1028,26 @@ function handleBubbleChartClick(sector) {
 }
 
 function handleParallelCoordinatesClick(indicator){
-  if(indicators.includes(indicator))
+  if(indicators.includes(indicator) || indicator == "priceVar")
     return
   
   indicators[indexToRemove] = indicator
 
   indexToRemove = (indexToRemove+1) % 6
 
-  updateAll()
+  updateAllExceptParallel()
 }
 
 //Update All charts
+
+function updateAllExceptParallel() {
+  for(let i=0; i < indicators.length; i++)
+    updateScatterPlot(`vi${i+1}`, indicators[i])
+
+  updateLineChart()
+  updateBubbleChart()
+  updateColorLabels()
+}
 
 function updateAll() {
   for(let i=0; i < indicators.length; i++)
