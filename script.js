@@ -779,6 +779,8 @@ function updateBubbleChart() {
 
 function createParallelCoordinates(id) {
 
+  var activeBrushes = new Map();
+
   var div = d3.select("body").append("div")	
   .attr("class", "tooltip")				
   .style("opacity", 0);
@@ -797,7 +799,7 @@ function createParallelCoordinates(id) {
             `translate(${margin.left},${margin.top})`);
     
     // Parse the Data
-    d3.csv(`./dataset/${year}.csv`).then( function(data) {
+    d3.csv(`./dataset/2014.csv`).then( function(data) {
 
       if(sectors.length == 1){
         let real_sector = abrev_to_sector[sectors[0]]
@@ -806,7 +808,7 @@ function createParallelCoordinates(id) {
 
     
       // Here I set the list of dimension manually to control the order of axis:
-      dimensions = ["priceVar","Gross Margin","EBITDA Margin","Net Profit Margin","returnOnEquity","ROIC","returnOnAssets","Net Debt to EBITDA","Debt to Equity","PE ratio","Enterprise Value over EBITDA","priceBookValueRatio"]
+      var dimensions = ["priceVar","Gross Margin","EBITDA Margin","Net Profit Margin","returnOnEquity","ROIC","returnOnAssets","Net Debt to EBITDA","Debt to Equity","PE ratio","Enterprise Value over EBITDA","priceBookValueRatio"]
     
       // For each dimension, I build a linear scale. I store all in a y object
       const y = {}
@@ -822,7 +824,8 @@ function createParallelCoordinates(id) {
       x = d3.scalePoint()
         .range([0, width])
         .domain(dimensions);
-    
+
+
       // Highlight the specie that is hovered
     
       // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
@@ -856,18 +859,75 @@ function createParallelCoordinates(id) {
                   .style("top", (event.pageY - 28) + "px");
               handleMouseOver(d.Company)
           })
+
+
+          function updateBrushing() {
+            svg.selectAll("path").classed("hidden", d => {
+
+              var path_visible = true;
+              
+              //for every attribute, check if it is brushed
+              dimensions.map(attribute => {
+                var attr_visible = true;
+
+                //if there is a brush for current attribute
+                if(activeBrushes.get(attribute) != undefined){
+
+                  //get event.selection for attribute
+                  const y0 = activeBrushes.get(attribute)["selection"][0]
+                  const y1 = activeBrushes.get(attribute)["selection"][1]
+                  //for current path, get the value for current attribute
+                  const value = y[attribute](d[attribute])
+                  //check if value in brush selection
+                  if(y0 <= value && y1 >= value){attr_visible = true;}
+                  else{attr_visible = false;}
+                }
+                path_visible = (path_visible && attr_visible);
+              })
+              
+              return !path_visible;
+            })
+          }
     
+
+          function brushed(attribute, selection) {
+            activeBrushes.set(attribute, selection);
+            updateBrushing();
+          }
+        
+          function brushEnd(attribute, selection) {
+            if (selection["selection"] !== null) return;
+            activeBrushes.delete(attribute);
+            updateBrushing();
+          }
+
+
       // Draw the axis:
-      svg.selectAll("myAxis")
-        // For each dimension of the dataset I add a 'g' element:
+      var axes = svg.append("g")
+        .selectAll("g")
         .data(dimensions)
-        .enter()
-        .append("g")
-        .attr("class", "axis")
+        .join("g")
+        .attr("class", d => `axis ${d}`)
         // I translate this element to its right position on the x axis
         .attr("transform", function(d) { return `translate(${x(d)})`})
         // And I build the axis with the call function
-        .each(function(d) { d3.select(this).call(d3.axisLeft().scale(y[d])); })
+        .each(function(d) { 
+          d3.select(this)
+          .call(d3.axisRight().scale(y[d]))
+          .call(
+            d3
+              .brushY()
+              .extent([[-10, margin.top], [10, height - margin.bottom]])
+              .on("brush", d => {
+                const dim = this.getAttribute("class").substring(5);
+                brushed(dim, d)
+              })
+              .on("end", d => {
+                const dim = this.getAttribute("class").substring(5);
+                brushEnd(dim, d)
+              })
+          ); 
+        })
         .on("click", (event, d) => handleParallelCoordinatesClick(d))
         // Add axis title
         .append("text")
@@ -876,8 +936,20 @@ function createParallelCoordinates(id) {
           .text(function(d) { return d; })
           .style("fill", "black")
           .style("cursor", d => d == "priceVar" ? "default" : "pointer")
-          .attr("transform", "rotate(-20)");
+          .attr("transform", "rotate(-20)")
     
+/*         d3.selectAll("g.axis")
+          .attr("class", "aquiiii")
+          .call(
+          d3
+            .brushY()
+            .extent([[-10, margin.top], [10, height - margin.bottom]])
+            .on("brush", d => {
+              console.log(d3.select(this))
+            })  
+            .on("end", brushEnd)
+        ); */
+
     })
 }
 
@@ -1217,9 +1289,6 @@ function updateRadarChart() {
 
       }
 
-      console.log(d.Company)
-      console.log(pos)
-
       return d3.line()(pos)
   }
 
@@ -1518,7 +1587,6 @@ function updateColorLabels(){
         for (let [key, value] of selectedColors.entries()) {
           if (value === color){
             handleMouseOver(key)
-            console.log(key)
           }
         }
       })
