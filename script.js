@@ -59,7 +59,11 @@ function init() {
     year = 2014
     indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"] 
     indexToRemove = 0
-    defaultCompanies = ["PG", "KR", "GIS"]
+    selectedCompanies = ["PG", "KR", "GIS"]
+    selectedColors = new Map();
+    selectedColors.set("PG","red")
+    selectedColors.set("KR","green") 
+    selectedColors.set("GIS","yellow")
     sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
     updateAll()
   });
@@ -1197,8 +1201,14 @@ function updateRadarChart() {
       for(let i=0; i < 7; i++){
         let index = i % 6
         let indicator = indicators[index]
-          let value = +d[indicator] < 0 ? 0 : d[indicator]
-          
+          let value
+          if(+d[indicator] == null || +d[indicator] < 0)
+              value = 0
+          else if(+d[indicator] == 0)
+            value = 0.0001
+          else
+            value = +d[indicator]
+
           let x = Math.cos(angle * Math.PI / 180) * value*112.5/maxValues[indicator] + 112.5
           let y = Math.sin(angle * Math.PI / 180) * value*112.5/maxValues[indicator] + 112.5
 
@@ -1206,6 +1216,9 @@ function updateRadarChart() {
           angle = (angle + 60) % 360
 
       }
+
+      console.log(d.Company)
+      console.log(pos)
 
       return d3.line()(pos)
   }
@@ -1215,6 +1228,7 @@ function updateRadarChart() {
       data = data.filter(d => selectedCompanies.includes(d.Company))
 
       indicators.map( ind => maxValues[ind] = d3.max(data, (d) => +d[ind]))
+
 
       svg
     .selectAll("path.radarPath")
@@ -1392,6 +1406,7 @@ function handleLineChartMouseLeave(company, color) {
 
 function handleLineChartMouseClick(company) {
   if(selectedCompanies.includes(company)){
+    if(selectedCompanies.length == 1) return
     selectedCompanies = selectedCompanies.filter(d => d !== company)
     selectedColors.delete(company)
     d3.selectAll(".itemValue")
@@ -1400,7 +1415,8 @@ function handleLineChartMouseClick(company) {
         selectedColors.get(d.Company)
         :
         "steelblue"
-      }).attr("r", 2);
+      })
+      .attr("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2 })
     d3.selectAll(".lineTest").style("stroke-width", 1.5);
   }
   else if(selectedCompanies.length < 5){
@@ -1490,8 +1506,23 @@ function getFreeColor(){
 function updateColorLabels(){
     texto = ""
     for(let i=0; i < selectedCompanies.length; i++)
-      texto += `<h3><span class="dot" style="background-color:${selectedColors.get(selectedCompanies[i])}"></span>${selectedCompanies[i]}<h3>\n`
+      texto += `<h3><span class="dot" id="${selectedColors.get(selectedCompanies[i])}" style="background-color:${selectedColors.get(selectedCompanies[i])}"></span>${selectedCompanies[i]}<h3>\n`
    
     div = d3.select("#colors")
     div.html(texto)	
+
+
+    availableColors.map( color => {
+      d3.select(`#${color}`)
+      .on("mouseover", () => {
+        for (let [key, value] of selectedColors.entries()) {
+          if (value === color){
+            handleMouseOver(key)
+            console.log(key)
+          }
+        }
+      })
+      .on("mouseleave", () => handleMouseLeave())
+    })
+    
 }
