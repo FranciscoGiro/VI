@@ -1,6 +1,6 @@
 var year = 2014
-var defaultIndicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
-var indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
+var defaultIndicators = ["ROA","EBITDA Margin (%)","ROE", "ROIC", "D/E", "P/B"]
+var indicators = ["ROA","EBITDA Margin (%)","ROE", "ROIC", "D/E", "P/B"]
 var indexToRemove = 0
 var defaultCompanies = ["PG", "KR", "GIS"]
 var selectedCompanies = ["PG", "KR", "GIS"]
@@ -65,7 +65,7 @@ function init() {
   });
   d3.select("#reset").on("click", () => {
     year = 2014
-    indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"] 
+    indicators = ["ROA","EBITDA Margin (%)","ROE", "ROIC", "D/E", "P/B"] 
     indexToRemove = 0
     selectedCompanies = ["PG", "KR", "GIS"]
     selectedColors = new Map();
@@ -116,7 +116,7 @@ function createScatterPlot(id, indicator) {
     .attr("font-weight", "bold")
     .attr("y", -margin.left+10)
     .attr("x", -margin.top+20)
-    .text("Price Var %")
+    .text("Price Change (%)")
 
     d3.csv("./dataset/2014.csv").then(function (data) {
 
@@ -131,7 +131,7 @@ function createScatterPlot(id, indicator) {
       .call(d3.axisBottom(x).ticks(6));
       
     const y = d3.scaleLinear()
-                .domain(d3.extent(data, (d) => +d.priceVar))
+                .domain(d3.extent(data, (d) => +d["Price Change (%)"]))
                 .range([height, 0]);
     svg
       .append("g")
@@ -145,7 +145,7 @@ function createScatterPlot(id, indicator) {
       .append("circle")
       .attr("class", "circleValues itemValue")
       .attr("cx", (d) => x(d[indicator]))
-      .attr("cy", (d) => y(d.priceVar))
+      .attr("cy", (d) => y(d["Price Change (%)"]))
       .style("r", (d) => {
         return selectedCompanies.includes(d.Company) ?
         4
@@ -211,7 +211,7 @@ function updateScatterPlot(id, indicator) {
       .call(d3.axisBottom(x).ticks(6));
 
     const y = d3.scaleLinear()
-                .domain(d3.extent(data, (d) => +d.priceVar))
+                .domain(d3.extent(data, (d) => +d["Price Change (%)"]))
                 .range([height, 0]);
     svg.select("#gYAxis").call(d3.axisLeft(y).ticks(8));
 
@@ -251,14 +251,14 @@ function updateScatterPlot(id, indicator) {
           circles
             .transition()
             .duration(1000)
-            .attr("cy", (d) => y(+d.priceVar));
+            .attr("cy", (d) => y(+d["Price Change (%)"]));
         },
         (update) => {
           update
             .transition()
             .duration(1000)
             .attr("cx", (d) => x(+d[indicator]))
-            .attr("cy", (d) => y(+d.priceVar))
+            .attr("cy", (d) => y(+d["Price Change (%)"]))
             .attr("r", 2);
         },
         (exit) => {
@@ -322,7 +322,7 @@ function createLineChart(id) {
   .attr("font-weight", "bold")
   .attr("y", -margin.left+20)
   .attr("x", -margin.top+20)
-  .text("Price Var %")
+  .text("Price Change (%)")
 
   
   d3.csv("./dataset/total.csv").then(function (data) {
@@ -338,7 +338,7 @@ function createLineChart(id) {
     .call(d3.axisBottom(x).ticks(5).tickFormat((x) => x));
 
   // create the Y axis
-  y.domain(d3.extent(data, d => +d.priceVar));
+  y.domain(d3.extent(data, d => +d["Price Change (%)"]));
   svg.selectAll(".myYaxis")
     .call(yAxis);
 
@@ -354,7 +354,7 @@ function createLineChart(id) {
     .attr("d", function(d){
       return d3.line()
         .x(d => x(d.year))
-        .y(d => y(+d.priceVar)) 
+        .y(d => y(+d["Price Change (%)"])) 
         (d[1])
     })
     .on("mouseover", (event, d) => {		
@@ -385,7 +385,7 @@ function createLineChart(id) {
       .join("circle")
       .attr("class", "lineValues")
       .attr("cx", (d) => x(d.year))
-      .attr("cy", (d) => y(+d.priceVar))
+      .attr("cy", (d) => y(+d["Price Change (%)"]))
       .attr("r", 3.3)
       .style("fill", d => selectedColors.get(d.Company))
       .on("click", (event, d) => {
@@ -398,7 +398,7 @@ function createLineChart(id) {
         div.transition()		
             .duration(200)		
             .style("opacity", .9);		
-        div.html(`${d.Company}\n${Number(d.priceVar).toFixed(2)}` + "<br/>")	
+        div.html(`${d.Company}\n${Number(d["Price Change (%)"]).toFixed(2)}` + "<br/>")	
             .style("left", (event.pageX) + "px")		
             .style("top", (event.pageY - 28) + "px");	
         handleMouseOver(d.Company)
@@ -420,8 +420,8 @@ function updateLineChart() {
   .style("opacity", 0);
 
 
-  const margin = { top: 20, right: 30, bottom: 40, left: 30 };
-  const width = 250 - margin.left - margin.right;
+  const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+  const width = 300 - margin.left - margin.right;
   const height = 300 - margin.top - margin.bottom;
 
   d3.csv(`./dataset/total.csv`).then(function (data) {
@@ -451,11 +451,11 @@ function updateLineChart() {
 
     // create the Y axis
     const y = d3.scaleLinear()
-        .domain(d3.extent(data, function(d) { return +d.priceVar; }))
+        .domain(d3.extent(data, function(d) { return +d["Price Change (%)"]; }))
         .range([height, 0]);
     var yAxis = d3.axisLeft().scale(y);
     
-    svg.selectAll(".myYaxis")
+    svg.select(".myYaxis")
       .call(yAxis);
 
     // Create a update selection: bind to the new data
@@ -473,7 +473,7 @@ function updateLineChart() {
         .attr("d", function(d){
                 return d3.line()
                   .x(function(d) { return x(d.year); })
-                  .y(function(d) { return y(+d.priceVar); })
+                  .y(function(d) { return y(+d["Price Change (%)"]); })
                   (d[1])
               })
         .attr("fill", "none")
@@ -504,7 +504,7 @@ function updateLineChart() {
         (update) => {
           update
             .attr("cx", (d) => x(d.year))
-            .attr("cy", (d) => y(+d.priceVar))
+            .attr("cy", (d) => y(+d["Price Change (%)"]))
             .attr("r", 4);
         },
         (exit) => {
@@ -522,7 +522,7 @@ function updateLineChart() {
             .append("circle")
             .attr("class", "lineValues")
             .attr("cx", (d) => x(d.year))
-            .attr("cy", (d) => y(+d.priceVar))
+            .attr("cy", (d) => y(+d["Price Change (%)"]))
             .attr("r", 3.3)
             .style("fill", d => selectedColors.get(d.Company))
             .on("mouseout", function(d) {		
@@ -534,7 +534,7 @@ function updateLineChart() {
               div.transition()		
                   .duration(200)		
                   .style("opacity", .9);		
-              div.html(`${d.Company}\n${Number(d.priceVar).toFixed(2)}` + "<br/>")	
+              div.html(`${d.Company}\n${Number(d["Price Change (%)"]).toFixed(2)}` + "<br/>")	
                   .style("left", (event.pageX) + "px")		
                   .style("top", (event.pageY - 28) + "px");	
               handleMouseOver(d.Company)
@@ -550,7 +550,7 @@ function updateLineChart() {
         (update) => {
           update
             .attr("cx", (d) => x(d.year))
-            .attr("cy", (d) => y(+d.priceVar))
+            .attr("cy", (d) => y(+d["Price Change (%)"]))
             .attr("r", 3.3)
             .style("fill", d => selectedColors.get(d.Company));
         },
@@ -616,7 +616,7 @@ function createBubbleChart(id) {
     .attr("font-weight", "bold")
     .attr("y", -margin.left+10)
     .attr("x", -margin.top)
-    .text("Price Var %")
+    .text("Price Change (%)")
 
     // Add a scale for bubble color
     const myColor = d3.scaleOrdinal()
@@ -651,7 +651,7 @@ function createBubbleChart(id) {
     
       // Add Y axis
 
-      y.domain(d3.extent(data, (d) => +d.priceVar));
+      y.domain(d3.extent(data, (d) => +d["Price Change (%)"]));
         svg.selectAll(".myYaxis")
             .call(yAxis);
 
@@ -668,7 +668,7 @@ function createBubbleChart(id) {
         .join("circle")
           .attr("class", "bubbleValues")
           .attr("cx", d => x(sector_to_abrev[d.Sector]))
-          .attr("cy", d => y(+d.priceVar))
+          .attr("cy", d => y(+d["Price Change (%)"]))
           .attr("r", d => z(d["Market Capitalisation"]))
           .style("fill", d => myColor(sector_to_abrev[d.Sector]))
           .style("opacity", "0.7")
@@ -720,7 +720,7 @@ function updateBubbleChart() {
       }
       // Add Y axis
       const y = d3.scaleLinear()
-            .domain(d3.extent(data, (d) => +d.priceVar))
+            .domain(d3.extent(data, (d) => +d["Price Change (%)"]))
             .range([height, 0]);
       svg.select("myYaxis").call(d3.axisLeft(y));
 
@@ -744,7 +744,7 @@ function updateBubbleChart() {
             .append("circle")
             .attr("class","bubbleValues")
             .attr("cx", d => x(sector_to_abrev[d.Sector]))
-            .attr("cy", d => y(d.priceVar))
+            .attr("cy", d => y(d["Price Change (%)"]))
             .attr("r", d => z(d["Market Capitalisation"]))
             .attr("fill", d => myColor(d.Sector))
             .style("opacity", "0.7")
@@ -768,12 +768,12 @@ function updateBubbleChart() {
           circles
             .transition()
             .duration(1000)
-            .attr("cy", d => y(d.priceVar))
+            .attr("cy", d => y(d["Price Change (%)"]))
         },
         (update) => {
           update
             .attr("cx", d => x(sector_to_abrev[d.Sector]))
-            .attr("cy", (d) => y(+d.priceVar))
+            .attr("cy", (d) => y(+d["Price Change (%)"]))
             .attr("r", d => z(d["Market Capitalisation"]))
         },
         (exit) => {
@@ -815,7 +815,7 @@ function createParallelCoordinates(id) {
 
     
       // Here I set the list of dimension manually to control the order of axis:
-      var dimensions = ["priceVar","Gross Margin","EBITDA Margin","Net Profit Margin","returnOnEquity","ROIC","returnOnAssets","Net Debt to EBITDA","Debt to Equity","PE ratio","Enterprise Value over EBITDA","priceBookValueRatio"]
+      var dimensions = ["Price Change (%)","Gross Margin (%)","EBITDA Margin (%)","Net Profit Margin (%)","ROE","ROIC","ROA","Net Debt to EBITDA","D/E","P/E","EV/EBITDA","P/B"]
     
       // For each dimension, I build a linear scale. I store all in a y object
       const y = {}
@@ -848,7 +848,7 @@ function createParallelCoordinates(id) {
           .attr("class", "myPath" ) 
           .attr("d",  path)
           .style("fill", "none" )
-          .style("stroke", function(d){ return( pathColorParallel(+d.priceVar))} )
+          .style("stroke", function(d){ return( pathColorParallel(+d["Price Change (%)"]))} )
           .style("stroke-width", 1.5)
           .style("opacity", 0.5)
           .on("mouseout", function(d) {		
@@ -950,7 +950,7 @@ function createParallelCoordinates(id) {
           .attr("y", -9)
           .text(function(d) { return d; })
           .style("fill", "black")
-          .style("cursor", d => d == "priceVar" ? "default" : "pointer")
+          .style("cursor", d => d == "Price Change (%)" ? "default" : "pointer")
           .attr("transform", "rotate(-20)")
     
 /*         d3.selectAll("g.axis")
@@ -990,7 +990,7 @@ function updateParallelCoordinates(id) {
       }
 
       // Here I set the list of dimension manually to control the order of axis:
-      dimensions = ["priceVar","Gross Margin","EBITDA Margin","Net Profit Margin","returnOnEquity","ROIC","returnOnAssets","Net Debt to EBITDA","Debt to Equity","PE ratio","Enterprise Value over EBITDA","priceBookValueRatio"]
+      dimensions = ["Price Change (%)","Gross Margin (%)","EBITDA Margin (%)","Net Profit Margin (%)","ROE","ROIC","ROA","Net Debt to EBITDA","D/E","P/E","EV/EBITDA","P/B"]
     
       // For each dimension, I build a linear scale. I store all in a y object
       const y = {}
@@ -1025,7 +1025,7 @@ function updateParallelCoordinates(id) {
                   .attr("class", "myPath" ) 
                   .attr("d",  path)
                   .style("fill", "none" )
-                  .style("stroke", function(d){ return( pathColorParallel(+d.priceVar))} )
+                  .style("stroke", function(d){ return( pathColorParallel(+d["Price Change (%)"]))} )
                   .style("stroke-width", 1.5)
                   .style("opacity", 0.5)
                   .on("mouseout", function(d) {		
@@ -1048,7 +1048,7 @@ function updateParallelCoordinates(id) {
                 update
                   .attr("d",  path)
                   .style("fill", "none" )
-                  .style("stroke", function(d){ return( pathColorParallel(+d.priceVar))} )
+                  .style("stroke", function(d){ return( pathColorParallel(+d["Price Change (%)"]))} )
           },
           (exit) => {
                 exit.remove()
@@ -1206,8 +1206,6 @@ var svg = d3.select(id)
 
 
   
-  //["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "Debt to Equity", "priceBookValueRatio"]
-
   let angle = 30 
   for(let i=0; i < indicators.length; i++){
     svg.append("text")
@@ -1478,7 +1476,7 @@ function handleMouseLeave() {
   //parallel coordinates lines
   d3.selectAll(".myPath")
   .style("stroke-width", 1.5)
-  .style("stroke", (d) => pathColorParallel(d.priceVar))
+  .style("stroke", (d) => pathColorParallel(d["Price Change (%)"]))
   .style("opacity", 0.5)
 
   d3.selectAll(".bubbleValues")
@@ -1519,7 +1517,7 @@ function handleLineChartMouseLeave(company, color) {
   d3.selectAll(".myPath")
   .filter(d => d.Company == company)
   .style("stroke-width", 1.5)
-  .style("stroke", (d) => pathColorParallel(d.priceVar))
+  .style("stroke", (d) => pathColorParallel(d["Price Change (%)"]))
   .style("opacity", 0.2)
 
   d3.selectAll(".bubbleValues")
@@ -1590,7 +1588,7 @@ function handleBubbleChartClick(sector) {
 }
 
 function handleParallelCoordinatesClick(indicator){
-  if(indicators.includes(indicator) || indicator == "priceVar")
+  if(indicators.includes(indicator) || indicator == "Price Change (%)")
     return
   
   indicators[indexToRemove] = indicator
