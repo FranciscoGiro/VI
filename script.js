@@ -297,11 +297,6 @@ function createLineChart(id) {
   .attr("transform", "translate(0," + height + ")")
   .attr("class","myXaxis")
 
-  // Initialize an Y axis
-  var y = d3.scaleLinear().range([height, 0]);
-  var yAxis = d3.axisLeft().scale(y);
-  svg.append("g")
-  .attr("class","myYaxis")
 
   const color = d3.scaleOrdinal()
       .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
@@ -337,16 +332,20 @@ function createLineChart(id) {
   svg.selectAll(".myXaxis")
     .call(d3.axisBottom(x).ticks(5).tickFormat((x) => x));
 
-  // create the Y axis
-  y.domain(d3.extent(data, d => +d["Price Change (%)"]));
-  svg.selectAll(".myYaxis")
-    .call(yAxis);
+    // Initialize an Y axis
+  var y = d3.scaleLinear()
+            .domain(d3.extent(data, d => +d["Price Change (%)"]))
+            .range([height, 0]);
+  svg.append("g")
+     .attr("id", "gYAxis")
+     .call(d3.axisLeft(y));
 
   // Create a update selection: bind to the new data
 
   svg.selectAll(".lineTest")
   .data(sumstat, d => d[0])
-  .join("path")
+  .enter()
+  .append("path")
     .attr("fill", "none")
     .attr("stroke", function(d){ return selectedColors.get(d[0])})
     .attr("stroke-width", 1.5)
@@ -382,7 +381,8 @@ function createLineChart(id) {
     svg
       .selectAll("circle.lineValues") 
       .data(data, (d) => d.Company) 
-      .join("circle")
+      .enter()
+      .append("circle")
       .attr("class", "lineValues")
       .attr("cx", (d) => x(d.year))
       .attr("cy", (d) => y(+d["Price Change (%)"]))
@@ -453,13 +453,12 @@ function updateLineChart() {
     const y = d3.scaleLinear()
         .domain(d3.extent(data, function(d) { return +d["Price Change (%)"]; }))
         .range([height, 0]);
-    var yAxis = d3.axisLeft().scale(y);
     
-    svg.select(".myYaxis")
-      .call(yAxis);
+    svg.select("#gYAxis")
+      .call(d3.axisLeft(y));
 
-    // Create a update selection: bind to the new data
-    var u = svg.selectAll(".lineTest")
+    
+    var u = svg.selectAll("path.lineTest")
       .data(sumstat);
 
     // Updata the line
@@ -473,7 +472,7 @@ function updateLineChart() {
         .attr("d", function(d){
                 return d3.line()
                   .x(function(d) { return x(d.year); })
-                  .y(function(d) { return y(+d["Price Change (%)"]); })
+                  .y(function(d) { return y(0); })
                   (d[1])
               })
         .attr("fill", "none")
@@ -500,12 +499,26 @@ function updateLineChart() {
                 .duration(500)		
                 .style("opacity", 0);	
         });
+        circles
+          .transition()
+          .duration(1000)
+          .attr("d", function(d){
+            return d3.line()
+              .x(function(d) { return x(d.year); })
+              .y(function(d) { return y(+d["Price Change (%)"]); })
+              (d[1])
+          })
         },
         (update) => {
           update
-            .attr("cx", (d) => x(d.year))
-            .attr("cy", (d) => y(+d["Price Change (%)"]))
-            .attr("r", 4);
+            .transition()
+            .duration(1000)
+            .attr("d", function(d){
+              return d3.line()
+                .x(function(d) { return x(d.year); })
+                .y(function(d) { return y(+d["Price Change (%)"]); })
+                (d[1])
+            })
         },
         (exit) => {
             exit.remove();
@@ -522,15 +535,16 @@ function updateLineChart() {
             .append("circle")
             .attr("class", "lineValues")
             .attr("cx", (d) => x(d.year))
-            .attr("cy", (d) => y(+d["Price Change (%)"]))
+            .attr("cy", (d) => y(0))
             .attr("r", 3.3)
             .style("fill", d => selectedColors.get(d.Company))
-            .on("mouseout", function(d) {		
+            .on("click", (event, d) => {
+              handleLineChartMouseClick(d.Company)
               div.transition()		
-                  .duration(500)		
-                  .style("opacity", 0);	
-          })
-          .on("mouseover", (event, d) => {		
+                    .duration(500)		
+                    .style("opacity", 0);	
+            })
+            .on("mouseover", (event, d) => {		
               div.transition()		
                   .duration(200)		
                   .style("opacity", .9);		
@@ -539,16 +553,21 @@ function updateLineChart() {
                   .style("top", (event.pageY - 28) + "px");	
               handleMouseOver(d.Company)
               })	
-            .on("mouseleave", (event, d) => handleLineChartMouseLeave())
-            .on("click", (event, d) => {
-              handleLineChartMouseClick(d.Company)
+            .on("mouseleave", (event, d) => handleMouseLeave())
+            .on("mouseout", function(d) {		
               div.transition()		
-                    .duration(500)		
-                    .style("opacity", 0);	
-            });
+                  .duration(500)		
+                  .style("opacity", 0);	
+          })
+            circles
+            .transition()
+            .duration(1000)
+            .attr("cy", (d) => y(+d["Price Change (%)"]));
         },
         (update) => {
           update
+            .transition()
+            .duration(1000)
             .attr("cx", (d) => x(d.year))
             .attr("cy", (d) => y(+d["Price Change (%)"]))
             .attr("r", 3.3)
