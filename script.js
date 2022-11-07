@@ -4,6 +4,7 @@ var indicators = ["returnOnAssets","EBITDA Margin","returnOnEquity", "ROIC", "De
 var indexToRemove = 0
 var defaultCompanies = ["PG", "KR", "GIS"]
 var selectedCompanies = ["PG", "KR", "GIS"]
+var hide = []
 var selectedColors = new Map();
 selectedColors.set("PG","red")
 selectedColors.set("KR","green") 
@@ -20,6 +21,8 @@ var abrev_to_sector = {"CD":"Consumer Defensive", "BM":"Basic Materials", "H":"H
                 "CC":"Consumer Cyclical", "I":"Industrials","RE":"Real Estate", "T":"Technology",
                 "CS":"Communication Services", "E":"Energy", "FS":"Financial Services", "U":"Utilities"}
 var maxValues = {}
+var activeBrushes = new Map();
+
 
 
 
@@ -33,12 +36,17 @@ function init() {
     createBubbleChart("#vi9")
     createParallelCoordinates("#vi10")
 
+  d3.select("#clica").on("click", () => {
+    d3.selectAll("rect").dispatch("end")
+  });
+
   d3.select("#b2014").on("click", () => {
     year = 2014
     updateAll()
   });
   d3.select("#b2015").on("click", () => {
     year = 2015;
+    d3.selectAll('#clica').dispatch('click');
     updateAll()
 
   });
@@ -128,7 +136,7 @@ function createScatterPlot(id, indicator) {
     svg
       .append("g")
       .attr("id", "gYAxis")
-      .call(d3.axisLeft(y));
+      .call(d3.axisLeft(y).ticks(8));
 
     svg
       .selectAll("circle.circleValues") 
@@ -205,7 +213,7 @@ function updateScatterPlot(id, indicator) {
     const y = d3.scaleLinear()
                 .domain(d3.extent(data, (d) => +d.priceVar))
                 .range([height, 0]);
-    svg.select("gYAxis").call(d3.axisLeft(y));
+    svg.select("#gYAxis").call(d3.axisLeft(y).ticks(8));
 
     svg
       .selectAll("circle.circleValues")
@@ -779,7 +787,6 @@ function updateBubbleChart() {
 
 function createParallelCoordinates(id) {
 
-  var activeBrushes = new Map();
 
   var div = d3.select("body").append("div")	
   .attr("class", "tooltip")				
@@ -862,7 +869,8 @@ function createParallelCoordinates(id) {
 
 
           function updateBrushing() {
-            svg.selectAll("path").classed("hidden", d => {
+
+            d3.selectAll("path.myPath").classed("hidden", d => {
 
               var path_visible = true;
               
@@ -884,9 +892,15 @@ function createParallelCoordinates(id) {
                 }
                 path_visible = (path_visible && attr_visible);
               })
-              
+              if(path_visible)
+                hide = hide.filter(c => c != d.Company)
+              else{
+                hide.push(d.Company)
+              }
               return !path_visible;
             })
+
+            handlePathVisible()
           }
     
 
@@ -923,6 +937,7 @@ function createParallelCoordinates(id) {
                 brushed(dim, d)
               })
               .on("end", d => {
+                console.log("print")
                 const dim = this.getAttribute("class").substring(5);
                 brushEnd(dim, d)
               })
@@ -1040,12 +1055,78 @@ function updateParallelCoordinates(id) {
           })
 
 
+          function updateBrushing() {
+
+            d3.selectAll("path.myPath").classed("hidden", d => {
+
+              var path_visible = true;
+              
+              //for every attribute, check if it is brushed
+              dimensions.map(attribute => {
+                var attr_visible = true;
+
+                //if there is a brush for current attribute
+                if(activeBrushes.get(attribute) != undefined){
+
+                  //get event.selection for attribute
+                  const y0 = activeBrushes.get(attribute)["selection"][0]
+                  const y1 = activeBrushes.get(attribute)["selection"][1]
+                  //for current path, get the value for current attribute
+                  const value = y[attribute](d[attribute])
+                  //check if value in brush selection
+                  if(y0 <= value && y1 >= value){attr_visible = true;}
+                  else{attr_visible = false;}
+                }
+                path_visible = (path_visible && attr_visible);
+              })
+              if(path_visible)
+                hide = hide.filter(c => c != d.Company)
+              else{
+                hide.push(d.Company)
+              }
+              return !path_visible;
+            })
+
+            handlePathVisible()
+          }
+    
+
+          function brushed(attribute, selection) {
+            activeBrushes.set(attribute, selection);
+            updateBrushing();
+          }
+        
+          function brushEnd(attribute, selection) {
+            if (selection["selection"] !== null) return;
+            activeBrushes.delete(attribute);
+            updateBrushing();
+          }
+
+
+
         svg.selectAll("g.axis")
         // For each dimension of the dataset I add a 'g' element:
         .data(dimensions)
-        .attr("class", "axis")
+        .attr("class", d => `axis ${d}`)
         // I translate this element to its right position on the x axis
-        .each(function(d) { d3.select(this).call(d3.axisLeft().scale(y[d])); })
+        .each(function(d) { 
+          d3.select(this)
+          .call(d3.axisRight().scale(y[d]))
+          .call(
+            d3
+              .brushY()
+              .extent([[-10, margin.top], [10, height - margin.bottom]])
+              .on("brush", d => {
+                const dim = this.getAttribute("class").substring(5);
+                brushed(dim, d)
+              })
+              .on("end", d => {
+                console.log("print")
+                const dim = this.getAttribute("class").substring(5);
+                brushEnd(dim, d)
+              })
+          ); 
+        })
         .on("click", (event, d) => handleParallelCoordinatesClick(d))
         // Add axis title
     })
@@ -1518,6 +1599,12 @@ function handleParallelCoordinatesClick(indicator){
 
   updateAllExceptParallel()
 }
+
+function handlePathVisible(){
+  d3.selectAll(".itemValue")
+    .style("opacity", d => hide.includes(d.Company) ? 0.0001 : 1);
+}
+
 
 //Update All charts
 

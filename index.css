@@ -58,3 +58,8 @@ h3 {
     stroke: #000; 
     stroke-opacity: 0.01;
 }
+
+.hidden2 {
+    fill: #000; 
+    opacity: 0.01;
+}
