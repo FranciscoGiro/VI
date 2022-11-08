@@ -1,7 +1,22 @@
 * {
     border: 0px;
     padding: 0px;
-    font-family:Georgia, 'Times New Roman', Times, serif;
+    margin: 0;
+    font-family: sans-serif;
+}
+
+.box {
+    background-color: grey;
+    border-radius: 0;
+}
+
+h1 {
+    font-size: 30px;
+    color: white;
+    padding: 0;
+    position: absolute;
+    top: 10px;
+    left: 28.5px;
 }
 
 .grid-scatterplot {
@@ -66,12 +81,27 @@ h3 {
 }
 
 button {
-    padding: 3px;
-    border-radius: 7px;
+    padding: 4px 10px 2px 10px;
+    border-radius: 4px;
+    background-color: white;
     cursor: pointer;
 }
 
 button:hover {
     background-color: #000;
+    color: white;
+}
+
+#reset {
+    margin-left: 10px;
+    padding: 4px 10px 2px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: grey;
+    color: white;
+}
+
+#reset:hover {
+    background-color: black;
     color: white;
 }

@@ -1,15 +1,15 @@
 var year = 2014
-var defaultIndicators = ["ROA","EBITDA Margin (%)","ROE", "ROIC", "D/E", "P/B"]
-var indicators = ["ROA","EBITDA Margin (%)","ROE", "ROIC", "D/E", "P/B"]
+var defaultIndicators = ["EBITDA Margin (%)","ROA","ROE", "ROIC", "D/E", "P/B"]
+var indicators = ["EBITDA Margin (%)","ROA","ROE", "ROIC", "D/E", "P/B"]
 var indexToRemove = 0
 var defaultCompanies = ["PG", "KR", "GIS"]
 var selectedCompanies = ["PG", "KR", "GIS"]
 var hide = []
 var selectedColors = new Map();
-selectedColors.set("PG","red")
-selectedColors.set("KR","green") 
-selectedColors.set("GIS","yellow")
-var availableColors = ["red", "green", "yellow", "purple", "orange"]
+selectedColors.set("PG","steelblue")
+selectedColors.set("KR","orange") 
+selectedColors.set("GIS","palevioletred")
+var availableColors = ["limegreen", "orange", "steelblue", "palevioletred ", "grey"]
 var sectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
 var allSectors = ["CD","BM","H", "CC", "I", "RE", "T", "CS", "E", "FS", "U"]
 
@@ -23,7 +23,9 @@ var abrev_to_sector = {"CD":"Consumer Defensive", "BM":"Basic Materials", "H":"H
 var maxValues = {}
 var activeBrushes = new Map();
 
+//
 
+var indicator_to_abrev = {"Gross Margin (%)":"GM","ROE":"ROE","Net Profit Margin (%)":"NPM","ROIC":"ROIC","3Y Revenue Growth (%)":"3Y RG","3Y Net Income Growth (%)":"3Y IG","D/E":"D/E","Net Debt to EBITDA":"NDE","P/E":"P/E","EV/EBITDA":"EV/E","P/B":"P/B","EBITDA Margin (%)":"EM","ROA":"ROA"}
 
 
 function init() {
@@ -36,11 +38,10 @@ function init() {
     createBubbleChart("#vi9")
     createParallelCoordinates("#vi10")
 
-  d3.select("#clica").on("click", () => {
-    d3.selectAll("rect").dispatch("end")
-  });
-
-  d3.select("#b2014").on("click", () => {
+  d3.select("#b2014")
+    .style("background-color", "black")
+    .style("color", "white")
+    .on("click", () => {
     year = 2014
     updateAll()
   });
@@ -87,8 +88,8 @@ function createScatterPlot(id, indicator) {
 
 
 
-  const margin = { top: 20, right: 30, bottom: 40, left: 40 };
-  const width = 200 - margin.left - margin.right;
+  const margin = { top: 20, right: 15, bottom: 40, left: 55 };
+  const width = 220 - margin.left - margin.right;
   const height = 160 - margin.top - margin.bottom;
 
 
@@ -102,7 +103,8 @@ function createScatterPlot(id, indicator) {
 
     svg.append("text")
     .attr("text-anchor", "end")
-    .attr("font-size", "12px")
+    .attr("font-size", "10px")
+    .attr("font-family", "sans-sarif")
     .attr("font-weight", "bold")
     .attr("class", "indicatorText")
     .attr("x", width)
@@ -112,9 +114,10 @@ function createScatterPlot(id, indicator) {
     svg.append("text")
     .attr("text-anchor", "end")
     .attr("transform", "rotate(-90)")
-    .attr("font-size", "12px")
+    .attr("font-size", "10px")
+    .attr("font-family", "sans-sarif")
     .attr("font-weight", "bold")
-    .attr("y", -margin.left+10)
+    .attr("y", -margin.left+20)
     .attr("x", -margin.top+20)
     .text("Price Change (%)")
 
@@ -184,8 +187,8 @@ function updateScatterPlot(id, indicator) {
   .attr("class", "tooltip")				
   .style("opacity", 0);
 
-  const margin = { top: 20, right: 30, bottom: 40, left: 40 };
-  const width = 200 - margin.left - margin.right;
+  const margin = { top: 20, right: 15, bottom: 40, left: 55 };
+  const width = 220 - margin.left - margin.right;
   const height = 160 - margin.top - margin.bottom;
 
   
@@ -276,8 +279,8 @@ function createLineChart(id) {
     .attr("class", "tooltip")				
     .style("opacity", 0);
 
-  const margin = { top: 20, right: 30, bottom: 40, left: 50 };
-  const width = 300 - margin.left - margin.right;
+  const margin = { top: 15, right: 30, bottom: 40, left: 50 };
+  const width = 350 - margin.left - margin.right;
   const height = 300 - margin.top - margin.bottom;
 
   // append the svg object to the body of the page
@@ -304,7 +307,8 @@ function createLineChart(id) {
 
   svg.append("text")
   .attr("text-anchor", "end")
-  .attr("font-size", "12px")
+  .attr("font-size", "10px")
+  .attr("font-family", "sans-serif")
   .attr("font-weight", "bold")
   .attr("x", width)
   .attr("y", height + margin.top + 10)
@@ -313,7 +317,8 @@ function createLineChart(id) {
   svg.append("text")
   .attr("text-anchor", "end")
   .attr("transform", "rotate(-90)")
-  .attr("font-size", "12px")
+  .attr("font-size", "10px")
+  .attr("font-family", "sans-serif")
   .attr("font-weight", "bold")
   .attr("y", -margin.left+20)
   .attr("x", -margin.top+20)
@@ -420,8 +425,8 @@ function updateLineChart() {
   .style("opacity", 0);
 
 
-  const margin = { top: 20, right: 30, bottom: 40, left: 50 };
-  const width = 300 - margin.left - margin.right;
+  const margin = { top: 15, right: 30, bottom: 40, left: 50 };
+  const width = 350 - margin.left - margin.right;
   const height = 300 - margin.top - margin.bottom;
 
   d3.csv(`./dataset/total.csv`).then(function (data) {
@@ -592,9 +597,9 @@ function createBubbleChart(id) {
     .attr("class", "sectorName")				
     .style("opacity", 0);
 
-  const margin = {top: 10, right: 20, bottom: 30, left: 50}
-  const width = 400 - margin.left - margin.right;
-  const height = 230 - margin.top - margin.bottom;
+  const margin = {top: 10, right: 20, bottom: 30, left: 60}
+  const width = 420 - margin.left - margin.right;
+  const height = 300 - margin.top - margin.bottom;
     
 
     // append the svg object to the body of the page
@@ -622,7 +627,8 @@ function createBubbleChart(id) {
 
     svg.append("text")
     .attr("text-anchor", "end")
-    .attr("font-size", "12px")
+    .attr("font-size", "10px")
+    .attr("font-family", "sans-serif")
     .attr("font-weight", "bold")
     .attr("x", width - 20)
     .attr("y", height + margin.top + 20)
@@ -631,9 +637,10 @@ function createBubbleChart(id) {
     svg.append("text")
     .attr("text-anchor", "end")
     .attr("transform", "rotate(-90)")
-    .attr("font-size", "12px")
+    .attr("font-size", "10px")
+    .attr("font-family", "sans-serif")
     .attr("font-weight", "bold")
-    .attr("y", -margin.left+10)
+    .attr("y", -margin.left+20)
     .attr("x", -margin.top)
     .text("Price Change (%)")
 
@@ -718,9 +725,9 @@ function updateBubbleChart() {
       .attr("class", "tooltip")				
       .style("opacity", 0);
 
-    const margin = {top: 10, right: 20, bottom: 30, left: 50}
-    const width = 400 - margin.left - margin.right;
-    const height = 230 - margin.top - margin.bottom;
+    const margin = {top: 10, right: 20, bottom: 30, left: 60}
+    const width = 420 - margin.left - margin.right;
+    const height = 300 - margin.top - margin.bottom;
     
 
     // append the svg object to the body of the page
@@ -811,9 +818,9 @@ function createParallelCoordinates(id) {
   .attr("class", "tooltip")				
   .style("opacity", 0);
 
-  const margin = {top: 30, right: 50, bottom: 10, left: 30},
-      width = 950 - margin.left - margin.right,
-      height = 250 - margin.top - margin.bottom;
+  const margin = {top: 43, right: 50, bottom: 10, left: 15},
+      width = 1000 - margin.left - margin.right,
+      height = 310 - margin.top - margin.bottom;
     
     // append the svg object to the body of the page
     const svg = d3.select("#vi10")
@@ -823,6 +830,90 @@ function createParallelCoordinates(id) {
     .attr("id", "gParallelCoordinatesChart")
       .attr("transform",
             `translate(${margin.left},${margin.top})`);
+
+      svg.append('circle')
+            .attr('cx', width/2 - 130)
+            .attr('cy', height)
+            .attr('r', 5)
+            .attr("border-radius", "0px")
+            .attr('stroke', '#5F021F')
+            .attr('fill', '#5F021F'); 
+
+
+        svg.append("text")
+        .attr("font-size", "10px")
+        .attr("font-family", "sans-serif")
+        .attr("font-weight", "bold")
+        .attr("y", height+5)
+        .attr("x", width/2 -120)
+        .text("< - 30 %")
+
+      svg.append('circle')
+          .attr('cx', width/2 - 60)
+          .attr('cy', height)
+          .attr('r', 5)
+          .attr("border-radius", "0px")
+          .attr('stroke', 'red')
+          .attr('fill', 'red'); 
+
+          svg.append("text")
+        .attr("font-size", "10px")
+        .attr("font-family", "sans-serif")
+        .attr("font-weight", "bold")
+        .attr("y", height+5)
+        .attr("x", width/2 -50)
+        .text("< 0 %")
+
+          svg.append('circle')
+          .attr('cx', width/2)
+          .attr('cy', height)
+          .attr('r', 5)
+          .attr("border-radius", "0px")
+          .attr('stroke', 'grey')
+          .attr('fill', 'grey'); 
+
+          svg.append("text")
+          .attr("font-size", "10px")
+          .attr("font-family", "sans-serif")
+          .attr("font-weight", "bold")
+          .attr("y", height+5)
+          .attr("x", width/2 +10)
+          .text("< 10 %")
+
+          svg.append('circle')
+          .attr('cx', width/2 + 60)
+          .attr('cy', height)
+          .attr('r', 5)
+          .attr("border-radius", "0px")
+          .attr('stroke', 'lightgreen')
+          .attr('fill', 'lightgreen'); 
+
+          svg.append("text")
+          .attr("font-size", "10px")
+          .attr("font-family", "sans-serif")
+          .attr("font-weight", "bold")
+          .attr("y", height+5)
+          .attr("x", width/2 +70)
+          .text("< 40 %")
+
+          svg.append('circle')
+          .attr('cx', width / 2 + 120)
+          .attr('cy', height)
+          .attr('r', 5)
+          .attr("border-radius", "0px")
+          .attr('stroke', 'green')
+          .attr('fill', 'green'); 
+
+          svg.append("text")
+          .attr("font-size", "10px")
+          .attr("font-family", "sans-serif")
+          .attr("font-weight", "bold")
+          .attr("y", height+5)
+          .attr("x", width/2 +130)
+          .text(">= 40 %")
+        
+
+
     
     // Parse the Data
     d3.csv(`./dataset/2014.csv`).then( function(data) {
@@ -834,7 +925,7 @@ function createParallelCoordinates(id) {
 
     
       // Here I set the list of dimension manually to control the order of axis:
-      var dimensions = ["Price Change (%)","Gross Margin (%)","EBITDA Margin (%)","Net Profit Margin (%)","ROE","ROIC","ROA","Net Debt to EBITDA","D/E","P/E","EV/EBITDA","P/B"]
+      var dimensions = ["Price Change (%)","Gross Margin (%)","ROE","Net Profit Margin (%)","ROIC","3Y Revenue Growth (%)","3Y Net Income Growth (%)","D/E","Net Debt to EBITDA","P/E","EV/EBITDA","P/B","EBITDA Margin (%)","ROA"]
     
       // For each dimension, I build a linear scale. I store all in a y object
       const y = {}
@@ -843,7 +934,7 @@ function createParallelCoordinates(id) {
         y[name] = d3.scaleLinear()
           .domain(d3.extent(data, (d) => +d[name]))
           // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
-          .range([height, 0])
+          .range([height-30, 0])
       }
     
       // Build the X scale -> it find the best position for each Y axis
@@ -974,18 +1065,6 @@ function createParallelCoordinates(id) {
           .style("cursor", d => d == "Price Change (%)" ? "default" : "pointer")
           .attr("transform", "rotate(-10)")
     
-/*         d3.selectAll("g.axis")
-          .attr("class", "aquiiii")
-          .call(
-          d3
-            .brushY()
-            .extent([[-10, margin.top], [10, height - margin.bottom]])
-            .on("brush", d => {
-              console.log(d3.select(this))
-            })  
-            .on("end", brushEnd)
-        ); */
-
     })
 }
 
@@ -995,9 +1074,9 @@ function updateParallelCoordinates(id) {
   .attr("class", "tooltip")				
   .style("opacity", 0);
 
-  const margin = {top: 30, right: 50, bottom: 10, left: 100},
-      width = 950 - margin.left - margin.right,
-      height = 250 - margin.top - margin.bottom;
+  const margin = {top: 43, right: 50, bottom: 10, left: 15},
+      width = 1000 - margin.left - margin.right,
+      height = 310 - margin.top - margin.bottom;
     
     // append the svg object to the body of the page
     const svg = d3.select("#gParallelCoordinatesChart")
@@ -1011,7 +1090,7 @@ function updateParallelCoordinates(id) {
       }
 
       // Here I set the list of dimension manually to control the order of axis:
-      dimensions = ["Price Change (%)","Gross Margin (%)","EBITDA Margin (%)","Net Profit Margin (%)","ROE","ROIC","ROA","Net Debt to EBITDA","D/E","P/E","EV/EBITDA","P/B"]
+      dimensions = ["Price Change (%)","Gross Margin (%)","ROE","Net Profit Margin (%)","ROIC","3Y Revenue Growth (%)","3Y Net Income Growth (%)","D/E","Net Debt to EBITDA","P/E","EV/EBITDA","P/B","EBITDA Margin (%)","ROA"]
     
       // For each dimension, I build a linear scale. I store all in a y object
       const y = {}
@@ -1020,7 +1099,7 @@ function updateParallelCoordinates(id) {
         y[name] = d3.scaleLinear()
           .domain(d3.extent(data, (d) => +d[name]))
           // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
-          .range([height, 0])
+          .range([height-30, 0])
       }
     
       // Build the X scale -> it find the best position for each Y axis
@@ -1161,7 +1240,7 @@ function createRadarChart(id) {
   .attr("class", "tooltip")               
   .style("opacity", 0);
 // set the dimensions and margins of the graph
-const margin = { top: 20, right: 0, bottom: 40, left: 40 };
+const margin = { top: 30, right: 0, bottom: 40, left: 40 };
 const width = 280 - margin.left - margin.right;
 const height = 300 - margin.top - margin.bottom;
 
@@ -1230,14 +1309,26 @@ var svg = d3.select(id)
   let angle = 30 
   for(let i=0; i < indicators.length; i++){
     svg.append("text")
-    .attr("text-anchor", "start")
-    .attr("font-size", "12px")
+    .attr("text-anchor", () => angle == 150 || angle == 210 ? "end" : "start")
+    .attr("font-size", "10px")
+    .attr("font-family", "sans-serif")
     .attr("font-weight", "bold")
     .attr("class", `indicator${i}`)
     .attr("y", 112.5 + Math.sin(angle * Math.PI / 180)*112.5)
     .attr("x", 112.5 + Math.cos(angle * Math.PI / 180)*112.5)
-    .attr("transform", "rotate(0)")
-    .text(indicators[i])
+    .text(indicator_to_abrev[indicators[i]])
+    .on("mouseover", (event) => {div.transition()		
+                              .duration(200)		
+                              .style("opacity", 1);		
+                            div.html(indicators[i])	
+                              .style("left", (event.pageX) + "px")		
+                              .style("top", (event.pageY - 28) + "px");	
+                          })
+    .on("mouseout", function(d) {		
+      div.transition()		
+          .duration(500)		
+          .style("opacity", 0);	
+    })
     
     angle += 60
   }
@@ -1350,8 +1441,11 @@ var svg = d3.select(id)
 
 function updateRadarChart() {
 
+  var div = d3.select("body").append("div") 
+  .attr("class", "tooltip")               
+  .style("opacity", 0);
 
-  const margin = { top: 20, right: 30, bottom: 40, left: 30 };
+  const margin = { top: 30, right: 30, bottom: 40, left: 30 };
   const width = 250 - margin.left - margin.right;
   const height = 300 - margin.top - margin.bottom;
 
@@ -1361,7 +1455,19 @@ function updateRadarChart() {
 
   for(let i=0; i < indicators.length; i++){
     svg.select(`.indicator${i}`)
-      .text(indicators[i])
+      .text(indicator_to_abrev[indicators[i]])
+      .on("mouseover", (event) => {div.transition()		
+                                .duration(200)		
+                                .style("opacity", 1);		
+                              div.html(indicators[i])	
+                                .style("left", (event.pageX) + "px")		
+                                .style("top", (event.pageY - 28) + "px");	
+                            })
+      .on("mouseout", function(d) {		
+        div.transition()		
+            .duration(500)		
+            .style("opacity", 0);	
+      })
   }
   
   function path(d) {
@@ -1592,6 +1698,8 @@ function handleLineChartMouseClick(company) {
     selectedCompanies.push(company)
     selectedColors.set(company, getFreeColor())
   }
+  else
+    return
   updateLineChart()  
   updateColorLabels()
   updateRadarChart()
@@ -1642,6 +1750,20 @@ function updateAllExceptParallel() {
 function updateAll() {
   for(let i=0; i < indicators.length; i++)
     updateScatterPlot(`vi${i+1}`, indicators[i])
+
+  for(let i = 2014; i < 2019; i++){
+    i == year ?
+    d3.select(`#b${i}`)
+      .style("background-color", "black")
+      .style("color", "white")
+      .on("Mouseover", () => this.style("background-color", "green"))
+    :
+    d3.select(`#b${i}`)
+    .style("background-color", "white")
+    .style("color", "black")
+    .on("Mouseover", () => this.style("background-color", "green"))
+  }
+
 
   updateLineChart()
   updateBubbleChart()
