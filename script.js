@@ -663,7 +663,7 @@ function createBubbleChart(id) {
                     .style("opacity", .9);		
                 div2.html(`${abrev_to_sector[d]}` + "<br/>")	
                     .style("left", (event.pageX-20) + "px")		
-                    .style("top", (event.pageY+10) + "px")
+                    .style("top", (event.pageY+20) + "px")
                     .style("background", myColor(d));
             })
 
@@ -812,7 +812,7 @@ function createParallelCoordinates(id) {
   .style("opacity", 0);
 
   const margin = {top: 30, right: 50, bottom: 10, left: 100},
-      width = 850 - margin.left - margin.right,
+      width = 950 - margin.left - margin.right,
       height = 250 - margin.top - margin.bottom;
     
     // append the svg object to the body of the page
@@ -965,12 +965,14 @@ function createParallelCoordinates(id) {
         .on("click", (event, d) => handleParallelCoordinatesClick(d))
         // Add axis title
         .append("text")
-          .style("text-anchor", "middle")
+          .style("text-anchor", "start")
+          .attr("font-family", "sans-serif")
+          .attr("font-weight", "bold")
           .attr("y", -9)
           .text(function(d) { return d; })
           .style("fill", "black")
           .style("cursor", d => d == "Price Change (%)" ? "default" : "pointer")
-          .attr("transform", "rotate(-20)")
+          .attr("transform", "rotate(-10)")
     
 /*         d3.selectAll("g.axis")
           .attr("class", "aquiiii")
@@ -994,7 +996,7 @@ function updateParallelCoordinates(id) {
   .style("opacity", 0);
 
   const margin = {top: 30, right: 50, bottom: 10, left: 100},
-      width = 850 - margin.left - margin.right,
+      width = 950 - margin.left - margin.right,
       height = 250 - margin.top - margin.bottom;
     
     // append the svg object to the body of the page

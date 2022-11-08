@@ -8,8 +8,8 @@
   <link rel="stylesheet" href="index.css">
 </head>
 
-<body style="max-height: 100vh ;display:flex ;flex-direction: column ; justify-content:center; align-items: center;" onload="init()">
-  <div style="width: 33%; float: left; justify-content: center; align-items: center; text-align: center;">
+<body style="max-height: 100vh ;display:flex ;flex-direction: column ; justify-content:center; align-items: center; background-color: steelblue;" onload="init()">
+  <div style="width:100%;display:flex;justify-content: center; align-items: center; text-align: center; margin-bottom: 8px; gap: 10px;">
     <button id="b2014">2014</button>
     <button id="b2015">2015</button>
     <button id="b2016">2016</button>
@@ -18,20 +18,22 @@
     <button id="reset">Reset</button>
   </div>
   <div style="width: 100%;">
-    <div style="height: 250px; width: 30%; float: left;" id="vi9"></div>
-    <div style="width: 70%; float: left;"></div><svg id="vi10"></svg></div>
+    <div style="height: 250px; width: 28%; float: left; background-color: white; border-radius: 13px; margin-right: 15px;" id="vi9"></div>
+    <div style="width: 68%; float: left; background-color: white; border-radius: 13px;"></div><svg id="vi10" style="background-color:white; border-radius: 13px;"></svg></div>
   </div>
-  <div id="colors" style="width: 100%; height: 30px; display: flex; justify-content:center; align-items: center;"></div>
-  <div style="width: 100%">
-    <div style="float: left; width: 50%;" class="grid-scatterplot">
+  <div style="width: 100%; margin-top: 30px;">
+    <div style="float: left; width: 47%;height: 330px; background-color: white; border-radius: 13px; margin-right: 20px;" class="grid-scatterplot">
       <div ><svg id="vi1"></svg></div>
       <div ><svg id="vi2"></svg></div>
       <div ><svg id="vi3"></svg></div>
       <div ><svg id="vi4"></svg></div>
       <div ><svg id="vi5"></svg></div>
       <div ><svg id="vi6"></svg></div></div>
-    <div style="width: 25%; height: 300px; float: left;" id="vi7"></div>
-    <div style="width: 25%; height:300px; float: left;" id="vi8"></div>
+    <div style="float:left;width: 47%; height: 330px;background-color: white; border-radius: 13px;">
+      <div id="colors" style="width: 100%; height: 30px; display: flex; justify-content:center; align-items: center;margin-top: 10px;"></div>
+      <div style="width: 50%; height: 300px; display: inline;" id="vi7"></div>
+      <div style="width: 50%; height:300px; display: inline;" id="vi8"></div>
+    </div>
   </div>
 </body>
 
