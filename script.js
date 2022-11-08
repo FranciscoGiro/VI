@@ -1041,7 +1041,7 @@ function createParallelCoordinates(id) {
           .call(
             d3
               .brushY()
-              .extent([[-10, margin.top], [10, height - margin.bottom]])
+              .extent([[-10, margin.top-45], [10, height - margin.bottom-18]])
               .on("brush", d => {
                 const dim = this.getAttribute("class").substring(5);
                 brushed(dim, d)
@@ -1215,7 +1215,7 @@ function updateParallelCoordinates(id) {
           .call(
             d3
               .brushY()
-              .extent([[-10, margin.top], [10, height - margin.bottom]])
+              .extent([[-10, margin.top-45], [10, height - margin.bottom-18]])
               .on("brush", d => {
                 const dim = this.getAttribute("class").substring(5);
                 brushed(dim, d)
