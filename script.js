@@ -146,7 +146,7 @@ function createScatterPlot(id, indicator) {
       .attr("class", "circleValues itemValue")
       .attr("cx", (d) => x(d[indicator]))
       .attr("cy", (d) => y(d["Price Change (%)"]))
-      .style("r", (d) => {
+      .attr("r", (d) => {
         return selectedCompanies.includes(d.Company) ?
         4
         :
@@ -225,7 +225,7 @@ function updateScatterPlot(id, indicator) {
             .attr("class", "circleValues itemValue")
             .attr("cx", (d) => x(+d[indicator]))
             .attr("cy", (d) => y(0))
-            .style("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2})
+            .attr("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2})
             .style("fill", (d) => {
               return selectedCompanies.includes(d.Company) ?
               selectedColors.get(d.Company)
@@ -741,7 +741,7 @@ function updateBubbleChart() {
       const y = d3.scaleLinear()
             .domain(d3.extent(data, (d) => +d["Price Change (%)"]))
             .range([height, 0]);
-      svg.select("myYaxis").call(d3.axisLeft(y));
+      svg.select(".myYaxis").call(d3.axisLeft(y));
 
       // Add a scale for bubble size
       const z = d3.scaleLinear()
@@ -811,7 +811,7 @@ function createParallelCoordinates(id) {
   .attr("class", "tooltip")				
   .style("opacity", 0);
 
-  const margin = {top: 30, right: 50, bottom: 10, left: 100},
+  const margin = {top: 30, right: 50, bottom: 10, left: 30},
       width = 950 - margin.left - margin.right,
       height = 250 - margin.top - margin.bottom;
     
@@ -1511,7 +1511,7 @@ function handleMouseLeave() {
       :
       "steelblue"
     })
-    .style("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2});
+    .attr("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2});
   
 
   // dots in Line Chart
@@ -1553,7 +1553,7 @@ function handleLineChartMouseLeave(company, color) {
       :
       "steelblue"
     })
-    .style("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2});
+    .attr("r", (d) => { return selectedCompanies.includes(d.Company) ? 4 : 2});
 
   d3.selectAll(".lineValues")
   .filter(d => d.Company == company)
